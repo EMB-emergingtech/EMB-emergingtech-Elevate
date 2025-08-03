@@ -13,13 +13,15 @@ import { Eye, Plus, InfoIcon } from 'lucide-react';
 import ICDRequestForm from '@/components/dashboard/ICDRequestForm';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+type InvestmentStatus = 'Active' | 'Pending Approval' | 'Matured' | 'Submitted' | 'In-Review' | 'Accepted' | 'Rejected' | 'Counter-offer' | 'Agreement Pending' | 'Payment Update';
+
 interface ICD {
   id: string;
   amount: number;
   interestRate: number;
   tenure: number;
   maturityDate: string;
-  status: string;
+  status: InvestmentStatus;
 }
 
 const ICDs = () => {
@@ -55,13 +57,12 @@ const ICDs = () => {
       interestRate: 8.00,
       tenure: 30,
       maturityDate: '2025-08-06',
-      status: 'Pending Approval'
+      status: 'Agreement Pending'
     },
     {
       id: 'ICD005',
       amount: 1000000,
       interestRate: 7.75,
-      tenure: 90,
       maturityDate: '2025-07-01',
       status: 'Matured'
     },
@@ -69,26 +70,50 @@ const ICDs = () => {
       id: 'ICD006',
       amount: 800000,
       interestRate: 8.25,
-      tenure: 60,
       maturityDate: '2025-06-15',
-      status: 'Matured'
+      status: 'In-Review'
+    },
+    {
+      id: 'ICD007',
+      amount: 1200000,
+      interestRate: 8.50,
+      maturityDate: '2025-11-10',
+      status: 'Counter-offer'
+    },
+    {
+      id: 'ICD008',
+      amount: 600000,
+      interestRate: 8.10,
+      maturityDate: '2025-12-01',
+      status: 'Payment Update'
     }
   ]);
 
-  const handleRequestSubmitted = (newRequest: ICD) => {
-    setIcds([newRequest, ...icds]);
+  const handleRequestSubmitted = (newRequest: Omit<ICD, 'id'>) => {
+    const fullRequest: ICD = {
+      ...newRequest,
+      id: `ICD${(icds.length + 1).toString().padStart(3, '0')}`,
+    };
+    setIcds([fullRequest, ...icds]);
   };
 
-  const getStatusBadgeClass = (status: string) => {
+  const getStatusBadgeClass = (status: InvestmentStatus) => {
     switch (status) {
       case 'Active':
         return 'status-badge status-badge-active';
       case 'Pending Approval':
+      case 'In-Review':
+      case 'Submitted':
         return 'status-badge status-badge-pending';
       case 'Matured':
+      case 'Accepted':
         return 'status-badge status-badge-approved';
       case 'Rejected':
         return 'status-badge status-badge-rejected';
+      case 'Counter-offer':
+      case 'Agreement Pending':
+      case 'Payment Update':
+        return 'status-badge status-badge-warning';
       default:
         return 'status-badge';
     }
@@ -106,7 +131,7 @@ const ICDs = () => {
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
                 <p className="text-sm italic">
-                  For demonstration purposes, all fund transfers are simulated and would be handled via a secure, external process.
+                  All fund transfers are simulated and would be handled via a secure, external process.
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -162,7 +187,7 @@ const ICDs = () => {
 
           <div className="mt-4 text-sm italic text-muted-foreground flex items-center gap-2">
             <InfoIcon className="h-4 w-4" />
-            <p>For demonstration purposes, all fund transfers are simulated and would be handled via a secure, external process.</p>
+            <p>All fund transfers are simulated and would be handled via a secure, external process.</p>
           </div>
         </CardContent>
       </Card>

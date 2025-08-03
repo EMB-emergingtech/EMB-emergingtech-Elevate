@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   DollarSign, 
@@ -13,7 +13,8 @@ import {
   ArrowRight,
   Building,
   FileText,
-  Sparkles
+  Sparkles,
+  Bell
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,10 @@ import InvitationForm from '@/components/dashboard/InvitationForm';
 import AdminAIAssistant from '@/components/dashboard/AdminAIAssistant';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useAdminNotifications } from '@/hooks/use-admin-notifications';
+import { supabase } from '@/lib/supabaseClient';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface Request {
   id: string;
@@ -61,169 +66,30 @@ interface Investment {
   status: string;
 }
 
+async function sendClerkInvitation(email: string) {
+  const res = await fetch('/api/invite-investor', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to send invitation');
+  return data.invitation;
+}
+
 const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('users');
-  const [pendingRequests, setPendingRequests] = useState<Request[]>([
-    {
-      id: 'ICD005',
-      user: 'Corporate Investor A',
-      type: 'ICD Request',
-      amount: 500000,
-      date: '2025-07-29',
-      details: '90-day term at 8.25% interest rate'
-    },
-    {
-      id: 'BND003',
-      user: 'John Henderson',
-      type: 'Bond Purchase',
-      amount: 250000,
-      date: '2025-07-28',
-      details: '25 units of XYZ Ltd. Bond 2026'
-    },
-    {
-      id: 'ICD006',
-      user: 'Corporate Investor B',
-      type: 'ICD Request',
-      amount: 750000,
-      date: '2025-07-27',
-      details: '180-day term at 8.50% interest rate'
-    },
-    {
-      id: 'KYC001',
-      user: 'Anita Desai',
-      type: 'KYC Verification',
-      amount: 0,
-      date: '2025-07-26',
-      details: 'Initial KYC documents submitted'
-    },
-    {
-      id: 'BND004',
-      user: 'Priya Singh',
-      type: 'Bond Purchase',
-      amount: 100000,
-      date: '2025-07-25',
-      details: '10 units of Government Bond 2035'
-    }
-  ]);
-
-  const [users] = useState<User[]>([
-    {
-      id: 'USR001',
-      name: 'Rajiv Mehta',
-      email: 'rajiv.mehta@corpa.com',
-      role: 'Investor',
-      joinedDate: '2025-01-15',
-      status: 'Active'
-    },
-    {
-      id: 'USR002',
-      name: 'Sunita Sharma',
-      email: 'sunita@corpb.com',
-      role: 'Investor',
-      joinedDate: '2025-02-20',
-      status: 'Active'
-    },
-    {
-      id: 'USR003',
-      name: 'John Henderson',
-      email: 'john.h@henderson.com',
-      role: 'Investor',
-      joinedDate: '2025-03-05',
-      status: 'Active'
-    },
-    {
-      id: 'USR004',
-      name: 'Wealth Partner One',
-      email: 'partner@elevate.demo',
-      role: 'Wealth Partner',
-      joinedDate: '2025-01-10',
-      status: 'Active'
-    },
-    {
-      id: 'USR005',
-      name: 'Admin User',
-      email: 'admin@elevate.demo',
-      role: 'Admin',
-      joinedDate: '2025-01-01',
-      status: 'Active'
-    },
-    {
-      id: 'USR006',
-      name: 'Anita Desai',
-      email: 'anita@desai.com',
-      role: 'Investor',
-      joinedDate: '2025-06-25',
-      status: 'KYC Pending'
-    },
-    {
-      id: 'USR007',
-      name: 'Michael Wong',
-      email: 'michael@wonginv.com',
-      role: 'Investor',
-      joinedDate: '2025-07-10',
-      status: 'KYC Pending'
-    }
-  ]);
-
-  const [investments] = useState<Investment[]>([
-    {
-      id: 'ICD001',
-      name: 'Alpha Manufacturing Ltd. ICD',
-      type: 'ICD',
-      interestRate: 8.75,
-      tenure: 90,
-      minInvestment: 200000,
-      status: 'Active'
-    },
-    {
-      id: 'ICD002',
-      name: 'Beta Technologies Inc. ICD',
-      type: 'ICD',
-      interestRate: 9.00,
-      tenure: 180,
-      minInvestment: 500000,
-      status: 'Active'
-    },
-    {
-      id: 'BND001',
-      name: 'Omega Infrastructure Ltd. Bond',
-      type: 'Bond',
-      interestRate: 8.25,
-      tenure: 36,
-      minInvestment: 100000,
-      status: 'Active'
-    },
-    {
-      id: 'BND002',
-      name: 'Sigma Power Corporation Bond',
-      type: 'Bond',
-      interestRate: 8.75,
-      tenure: 60,
-      minInvestment: 250000,
-      status: 'Active'
-    },
-    {
-      id: 'ICD003',
-      name: 'Gamma Healthcare Services ICD',
-      type: 'ICD',
-      interestRate: 8.50,
-      tenure: 60,
-      minInvestment: 300000,
-      status: 'Pending Approval'
-    },
-    {
-      id: 'BND003',
-      name: 'Theta Financial Services Bond',
-      type: 'Bond',
-      interestRate: 9.10,
-      tenure: 48,
-      minInvestment: 150000,
-      status: 'Pending Approval'
-    }
-  ]);
-
+  const [users, setUsers] = useState<User[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<Request[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingInvestments, setLoadingInvestments] = useState(false);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [useSupabaseUsers, setUseSupabaseUsers] = useState(true);
+  const [useSupabaseInvestments, setUseSupabaseInvestments] = useState(true);
+  const [useSupabaseRequests, setUseSupabaseRequests] = useState(true);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmDialogProps, setConfirmDialogProps] = useState<{
     title: string;
@@ -241,6 +107,96 @@ const Dashboard = () => {
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Investor');
+  const { notifications, loading: notificationsLoading } = useAdminNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    if (!useSupabaseUsers) return;
+    setLoadingUsers(true);
+    
+    // Fetch from profiles table joined with auth.users for user data
+    supabase
+      .from('profiles')
+      .select(`
+        id,
+        role,
+        created_at,
+        auth_users:auth.users(email)
+      `)
+      .then(({ data, error }) => {
+        console.log('Users fetch result:', { data, error });
+        if (!error && data && data.length > 0) {
+          setUsers(
+            data.map((u: any) => ({
+              id: u.id,
+              name: u.auth_users?.email?.split('@')[0] || 'Unknown',
+              email: u.auth_users?.email || 'Unknown',
+              role: u.role,
+              joinedDate: u.created_at || new Date().toISOString(),
+              status: 'Active'
+            }))
+          );
+        } else {
+          console.error('Could not fetch users from backend. Showing mock data.');
+        }
+        setLoadingUsers(false);
+      });
+  }, [useSupabaseUsers]);
+
+  useEffect(() => {
+    if (!useSupabaseInvestments) return;
+    setLoadingInvestments(true);
+    
+    supabase
+      .from('investments')
+      .select('*')
+      .then(({ data, error }) => {
+        console.log('Investments fetch result:', { data, error });
+        if (!error && data && data.length > 0) {
+          setInvestments(
+            data.map((i: any) => ({
+              id: i.id,
+              name: i.name || `${i.type} Investment`,
+              type: i.type,
+              interestRate: i.interestRate || i.interest_rate || i.roi || 0,
+              tenure: i.tenure || parseInt(i.duration) || 0,
+              minInvestment: i.minInvestment || i.min_investment || i.amount || 0,
+              status: i.status || 'Active'
+            }))
+          );
+        } else {
+          console.error('Could not fetch investments from backend. Showing mock data.');
+        }
+        setLoadingInvestments(false);
+      });
+  }, [useSupabaseInvestments]);
+
+  useEffect(() => {
+    if (!useSupabaseRequests) return;
+    setLoadingRequests(true);
+    
+    supabase
+      .from('pending_requests')
+      .select('*')
+      .then(({ data, error }) => {
+        console.log('Requests fetch result:', { data, error });
+        if (!error && data && data.length > 0) {
+          setPendingRequests(
+            data.map((r: any) => ({
+              id: r.id,
+              user: r.user_name, // Updated to use user_name instead of user
+              type: r.type,
+              amount: r.amount || 0,
+              date: r.date || r.created_at,
+              details: r.details || `${r.type} request`
+            }))
+          );
+        } else {
+          console.error('Could not fetch requests from backend. Showing mock data.');
+        }
+        setLoadingRequests(false);
+      });
+  }, [useSupabaseRequests]);
 
   const handleAction = (action: 'approve' | 'reject', request: Request) => {
     setConfirmDialogProps({
@@ -297,9 +253,60 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Supabase toggles */}
+      <div className="flex gap-6 mb-2">
+        <div className="flex items-center gap-2">
+          <Switch id="useSupabaseUsers" checked={useSupabaseUsers} onCheckedChange={setUseSupabaseUsers} />
+          <Label htmlFor="useSupabaseUsers">Users: Supabase</Label>
+          {loadingUsers && <span className="text-xs text-muted-foreground">Loading users...</span>}
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch id="useSupabaseInvestments" checked={useSupabaseInvestments} onCheckedChange={setUseSupabaseInvestments} />
+          <Label htmlFor="useSupabaseInvestments">Investments: Supabase</Label>
+          {loadingInvestments && <span className="text-xs text-muted-foreground">Loading investments...</span>}
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch id="useSupabaseRequests" checked={useSupabaseRequests} onCheckedChange={setUseSupabaseRequests} />
+          <Label htmlFor="useSupabaseRequests">Requests: Supabase</Label>
+          {loadingRequests && <span className="text-xs text-muted-foreground">Loading requests...</span>}
+        </div>
+      </div>
+
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center relative">
+          {/* Notification Bell */}
+          <button
+            className="relative p-2 rounded-full hover:bg-muted focus:outline-none"
+            onClick={() => setShowNotifications((v) => !v)}
+            aria-label="Show notifications"
+          >
+            <Bell className="h-6 w-6 text-primary" />
+            {notifications && notifications.length > 0 && (
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                {notifications.length}
+              </span>
+            )}
+          </button>
+          {/* Notifications Dropdown */}
+          {showNotifications && (
+            <div className="absolute right-0 mt-12 w-96 bg-white border border-border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+              <div className="p-4 border-b border-border font-semibold">Admin Alerts</div>
+              <ul className="divide-y divide-border">
+                {notificationsLoading ? (
+                  <li className="p-4 text-center text-muted-foreground">Loading...</li>
+                ) : notifications.length === 0 ? (
+                  <li className="p-4 text-center text-muted-foreground">No new notifications</li>
+                ) : notifications.slice(0, 10).map((notif, idx) => (
+                  <li key={idx} className="p-4 hover:bg-muted/50">
+                    <div className="font-medium">{notif.type}</div>
+                    <div className="text-sm text-muted-foreground">{notif.message}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{new Date(notif.date).toLocaleString()}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <Button 
             onClick={() => setIsInvitationFormOpen(true)}
             className="bg-primary hover:bg-primary/90 text-primary-foreground elevate-glow"
@@ -314,6 +321,14 @@ const Dashboard = () => {
           >
             <Sparkles className="mr-2 h-4 w-4" />
             AI Assistant
+          </Button>
+          <Button
+            variant="outline"
+            className="border-primary text-primary"
+            onClick={() => navigate('/dashboard/admin/kyc')}
+          >
+            <UserPlus className="mr-2 h-4 w-4" />
+            KYC Tracking
           </Button>
         </div>
       </div>
@@ -516,10 +531,15 @@ const Dashboard = () => {
                   <Button 
                     type="button" 
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                    onClick={() => {
+                    onClick={async () => {
                       if (email) {
-                        toast.success(`Invitation sent to ${email} for ${role} role`);
-                        setEmail('');
+                        try {
+                          await sendClerkInvitation(email);
+                          toast.success(`Invitation sent to ${email} for ${role} role`);
+                          setEmail('');
+                        } catch (err: any) {
+                          toast.error('Failed to send invitation: ' + err.message);
+                        }
                       } else {
                         toast.error('Please enter an email address');
                       }

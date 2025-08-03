@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Users, 
@@ -23,6 +23,8 @@ import StatCard from '@/components/dashboard/StatCard';
 import { useNavigate } from 'react-router-dom';
 import InvestorCard from '@/components/dashboard/InvestorCard';
 import { useToast } from '@/hooks/use-toast';
+import ReferralHistory from '@/components/dashboard/ReferralHistory';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Investor {
   id: string;
@@ -36,6 +38,9 @@ interface Investor {
 }
 
 const Dashboard = () => {
+  const partnerEmail = 'partner@mock.com';
+  const [investorCount, setInvestorCount] = useState(0);
+  const referralCode = 'REFCODE123';
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAddInvestorOpen, setIsAddInvestorOpen] = useState(false);
@@ -129,6 +134,17 @@ const Dashboard = () => {
     }
   ]);
 
+  useEffect(() => {
+    async function fetchInvestorCount() {
+      const { count } = await supabase
+        .from('referrals')
+        .select('investorEmail', { count: 'exact', head: true })
+        .eq('partnerEmail', partnerEmail);
+      setInvestorCount(count || 0);
+    }
+    if (partnerEmail) fetchInvestorCount();
+  }, [partnerEmail]);
+
   const handleViewAllInvestors = () => {
     navigate('/dashboard/partner/investors');
   };
@@ -146,9 +162,10 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Wealth Partner Dashboard</h1>
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground elevate-glow">
-          Download Reports
-        </Button>
+        <div className="flex flex-col items-end">
+          <span className="text-sm text-muted-foreground">Referral Code:</span>
+          <span className="font-mono text-lg">{referralCode}</span>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -166,7 +183,7 @@ const Dashboard = () => {
         />
         <StatCard 
           title="Total Investors" 
-          value="8" 
+          value={investorCount.toString()} 
           icon={<Users className="h-5 w-5" />} 
         />
         <StatCard 
@@ -360,6 +377,8 @@ const Dashboard = () => {
         onClose={() => setIsAddInvestorOpen(false)}
         onInvestorAdded={handleInvestorAdded}
       />
+
+      <ReferralHistory />
     </div>
   );
 };

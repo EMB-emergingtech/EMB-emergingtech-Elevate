@@ -62,23 +62,35 @@ const LoginForm = () => {
     }, 1000);
   };
 
-  const handlePasswordLogin = (e: React.FormEvent) => {
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); // Clear any previous errors
+    setError('');
     setIsLoading(true);
-    
-    setTimeout(() => {
-      const validation = validateCredentials(email, password);
+    try {
+      // Mock signIn function
+      const result = await new Promise<{ createdSessionId: string }>((resolve, reject) => {
+        setTimeout(() => {
+          const { isValid, redirectPath, error } = validateCredentials(email, password);
+          if (isValid) {
+            resolve({ createdSessionId: 'mockSessionId' });
+          } else {
+            reject({ errors: [{ message: error }] });
+          }
+        }, 1000);
+      });
       
-      if (validation.isValid) {
-        setIsLoading(false);
-        toast.success("Login successful");
-        navigate(validation.redirectPath!);
-      } else {
-        setIsLoading(false);
-        setError(validation.error);
-      }
-    }, 1000);
+      // Mock setActive function
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
+      // Navigate based on role
+      const role = email === 'admin@elevate.demo' ? 'admin' : email === 'partner@elevate.demo' ? 'partner' : 'investor';
+      navigate(role === 'admin' ? '/dashboard/admin' : role === 'partner' ? '/dashboard/partner' : '/dashboard/investor');
+      toast.success('Login successful');
+    } catch (err: any) {
+      setError(err.errors?.[0]?.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOtpVerify = (e: React.FormEvent) => {

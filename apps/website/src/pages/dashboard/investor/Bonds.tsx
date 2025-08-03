@@ -12,10 +12,23 @@ import { Download, Eye, Plus, InfoIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+type InvestmentStatus = 'Active' | 'Pending Approval' | 'Matured' | 'Submitted' | 'In-Review' | 'Accepted' | 'Rejected' | 'Counter-offer' | 'Agreement Pending' | 'Payment Update';
+
+interface BondHolding {
+  id: string;
+  name: string;
+  isin: string;
+  unitsHeld: number;
+  investedValue: number;
+  currentValue: number;
+  couponRate: number;
+  status: InvestmentStatus;
+}
+
 const Bonds = () => {
   const { toast } = useToast();
   
-  const bonds = [
+  const bonds: BondHolding[] = [
     {
       id: 'BND001',
       name: '8.25% ABC Corp Bond 2028',
@@ -23,7 +36,8 @@ const Bonds = () => {
       unitsHeld: 50,
       investedValue: 500000,
       currentValue: 525000,
-      couponRate: 8.25
+      couponRate: 8.25,
+      status: 'Active'
     },
     {
       id: 'BND002',
@@ -32,7 +46,8 @@ const Bonds = () => {
       unitsHeld: 25,
       investedValue: 250000,
       currentValue: 257500,
-      couponRate: 7.65
+      couponRate: 7.65,
+      status: 'Active'
     },
     {
       id: 'BND003',
@@ -41,7 +56,8 @@ const Bonds = () => {
       unitsHeld: 35,
       investedValue: 350000,
       currentValue: 371000,
-      couponRate: 9.10
+      couponRate: 9.10,
+      status: 'Submitted'
     },
     {
       id: 'BND004',
@@ -50,7 +66,8 @@ const Bonds = () => {
       unitsHeld: 40,
       investedValue: 400000,
       currentValue: 412000,
-      couponRate: 7.95
+      couponRate: 7.95,
+      status: 'In-Review'
     },
     {
       id: 'BND005',
@@ -59,7 +76,8 @@ const Bonds = () => {
       unitsHeld: 30,
       investedValue: 300000,
       currentValue: 315000,
-      couponRate: 8.50
+      couponRate: 8.50,
+      status: 'Accepted'
     },
     {
       id: 'BND006',
@@ -68,7 +86,8 @@ const Bonds = () => {
       unitsHeld: 35,
       investedValue: 350000,
       currentValue: 368200,
-      couponRate: 8.75
+      couponRate: 8.75,
+      status: 'Rejected'
     }
   ];
 
@@ -78,6 +97,28 @@ const Bonds = () => {
 
   const handleBrowseBonds = () => {
     toast.info("Browsing bond marketplace");
+  };
+
+  const getStatusBadgeClass = (status: InvestmentStatus) => {
+    switch (status) {
+      case 'Active':
+        return 'status-badge status-badge-active';
+      case 'Pending Approval':
+      case 'In-Review':
+      case 'Submitted':
+        return 'status-badge status-badge-pending';
+      case 'Matured':
+      case 'Accepted':
+        return 'status-badge status-badge-approved';
+      case 'Rejected':
+        return 'status-badge status-badge-rejected';
+      case 'Counter-offer':
+      case 'Agreement Pending':
+      case 'Payment Update':
+        return 'status-badge status-badge-warning';
+      default:
+        return 'status-badge';
+    }
   };
 
   return (
@@ -92,7 +133,7 @@ const Bonds = () => {
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
                 <p className="text-sm italic">
-                  For demonstration purposes, all fund transfers are simulated and would be handled via a secure, external process.
+                  All fund transfers are simulated and would be handled via a secure, external process.
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -123,6 +164,7 @@ const Bonds = () => {
                 <TableHead className="text-right">Invested Value</TableHead>
                 <TableHead className="text-right">Current Value</TableHead>
                 <TableHead className="text-center">Coupon Rate</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -146,6 +188,11 @@ const Bonds = () => {
                     ) : null}
                   </TableCell>
                   <TableCell className="text-center font-mono">{bond.couponRate}%</TableCell>
+                  <TableCell>
+                    <span className={getStatusBadgeClass(bond.status)}>
+                      {bond.status}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button 
                       variant="ghost" 
@@ -163,7 +210,7 @@ const Bonds = () => {
           
           <div className="mt-4 text-sm italic text-muted-foreground flex items-center gap-2">
             <InfoIcon className="h-4 w-4" />
-            <p>For demonstration purposes, all fund transfers are simulated and would be handled via a secure, external process.</p>
+            <p>All fund transfers are simulated and would be handled via a secure, external process.</p>
           </div>
         </CardContent>
       </Card>

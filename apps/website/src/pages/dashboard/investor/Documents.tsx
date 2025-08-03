@@ -82,6 +82,13 @@ const Documents = () => {
       category: 'Statement',
       date: '2025-01-31',
       size: '5.8 MB'
+    },
+    {
+      id: 'DOC008',
+      name: 'REIT Purchase_REIT001.pdf',
+      category: 'Agreement',
+      date: '2025-07-28',
+      size: '3.5 MB'
     }
   ];
 

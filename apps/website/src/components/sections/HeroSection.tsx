@@ -74,8 +74,8 @@ const HeroSection = () => {
             
             {/* Main image */}
             <img 
-              src="https://storage.googleapis.com/fenado-ai-farm-public/generated/2e58c3d6-5676-4f5e-88b3-f29677eb0d4f.webp" 
-              alt="Financial data visualization" 
+              src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+              alt="Modern financial technology and investment analytics" 
               className="relative z-10 w-full h-auto rounded-2xl shadow-xl"
             />
             

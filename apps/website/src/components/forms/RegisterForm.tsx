@@ -17,10 +17,15 @@ const RegisterForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [inviteCodeError, setInviteCodeError] = useState('');
+  const [role, setRole] = useState('investor');
+  const [entityType, setEntityType] = useState('individual');
+  const [showOtp, setShowOtp] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpError, setOtpError] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate invite code
@@ -28,15 +33,60 @@ const RegisterForm = () => {
       setInviteCodeError('Invalid invite code. Use "INVITE123" for the demo.');
       return;
     }
-    
     setIsLoading(true);
-    
-    setTimeout(() => {
+    try {
+      // Demo: use fixed email for admin
+      const email = (document.getElementById('email') as HTMLInputElement)?.value;
+      const password = (document.getElementById('password') as HTMLInputElement)?.value;
+      const fullName = (document.getElementById('fullName') as HTMLInputElement)?.value;
+      
+      // Clerk sign up
+      await signUp.create({
+        emailAddress: email,
+        password,
+        firstName: fullName,
+      });
+      
+      // Set role, entityType, and kycStatus in public metadata
+      await signUp.update({ publicMetadata: { role, entityType: role === 'partner' ? entityType : undefined, kycStatus: role === 'partner' ? 'pending' : undefined } });
+      
+      // Mock OTP step
+      setShowOtp(true);
+      toast.success('Mock OTP sent to your email! (Use 123456)');
+    } catch (err: any) {
+      setInviteCodeError(err.errors?.[0]?.message || 'Registration failed');
+    } finally {
       setIsLoading(false);
-      toast.success("Account created successfully!");
-      navigate("/login");
-    }, 1500);
+    }
   };
+
+  const handleOtpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp === '123456') {
+      toast.success('Email verified!');
+      if (role === 'partner') {
+        navigate('/kyc');
+      } else {
+        navigate('/login');
+      }
+    } else {
+      setOtpError('Invalid OTP. Use 123456 for demo.');
+    }
+  };
+
+  if (showOtp) {
+    return (
+      <form onSubmit={handleOtpSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="otp">Enter OTP</Label>
+          <Input id="otp" type="text" value={otp} onChange={e => { setOtp(e.target.value); setOtpError(''); }} placeholder="123456" required />
+          {otpError && <p className="text-destructive text-sm mt-1">{otpError}</p>}
+          <p className="text-xs text-muted-foreground mt-1">For demo, use OTP: <span className="font-mono">123456</span></p>
+        </div>
+        <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? 'Verifying...' : 'Verify OTP'}</Button>
+      </form>
+    );
+  }
 
   return (
     <form onSubmit={handleRegister} className="space-y-6">
@@ -117,7 +167,7 @@ const RegisterForm = () => {
         
         <div className="space-y-2">
           <Label htmlFor="role">Role <span className="text-destructive">*</span></Label>
-          <Select required defaultValue="investor">
+          <Select required value={role} onValueChange={setRole} defaultValue="investor">
             <SelectTrigger id="role">
               <SelectValue placeholder="Select your role" />
             </SelectTrigger>
@@ -127,6 +177,22 @@ const RegisterForm = () => {
             </SelectContent>
           </Select>
         </div>
+        {role === 'partner' && (
+          <div className="space-y-2">
+            <Label htmlFor="entityType">Entity Type <span className="text-destructive">*</span></Label>
+            <Select required value={entityType} onValueChange={setEntityType} defaultValue="individual">
+              <SelectTrigger id="entityType">
+                <SelectValue placeholder="Select entity type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="individual">Individual</SelectItem>
+                <SelectItem value="firm">Firm</SelectItem>
+                <SelectItem value="company">Company</SelectItem>
+                <SelectItem value="huf">HUF</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
       
       <Button 

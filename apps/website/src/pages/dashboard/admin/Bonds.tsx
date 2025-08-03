@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -19,6 +19,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import BondUploadForm from '@/components/dashboard/BondUploadForm';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Bond {
   id: string;
@@ -35,6 +36,8 @@ const Bonds = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [ratingFilter, setRatingFilter] = useState('all');
   const [isUploadFormOpen, setIsUploadFormOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [useSupabase, setUseSupabase] = useState(true); // Toggle for Supabase/mock
   
   const [bonds, setBonds] = useState<Bond[]>([
     {
@@ -99,6 +102,31 @@ const Bonds = () => {
     }
   ]);
 
+  useEffect(() => {
+    if (!useSupabase) return;
+    setLoading(true);
+    supabase
+      .from('bonds')
+      .select('*')
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          setBonds(
+            data.map((b: any) => ({
+              id: b.id,
+              name: b.name,
+              isin: b.isin,
+              coupon: b.coupon,
+              maturity: b.maturity,
+              rating: b.rating,
+              availableUnits: b.availableUnits,
+              unitPrice: b.unitPrice
+            }))
+          );
+        }
+        setLoading(false);
+      });
+  }, [useSupabase]);
+
   const handleBondsUploaded = (newBonds: Bond[]) => {
     setBonds([...newBonds, ...bonds]);
   };
@@ -120,6 +148,13 @@ const Bonds = () => {
 
   return (
     <>
+      {/* Toggle for Supabase or Mock Data */}
+      <div className="flex items-center gap-4 mb-2">
+        <Switch id="useSupabase" checked={useSupabase} onCheckedChange={setUseSupabase} />
+        <Label htmlFor="useSupabase">Use Supabase Data</Label>
+        {loading && <span className="text-xs text-muted-foreground">Loading bonds...</span>}
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Bond Management</h1>
         <Button 

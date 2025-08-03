@@ -1,9 +1,12 @@
+import React, { useEffect } from 'react';
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { LayoutDashboard, FileText, CreditCard, BarChart3, Users, Building2, UserPlus, FileBarChart, ShieldCheck, AlertCircle } from 'lucide-react';
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { LayoutDashboard, FileText, CreditCard, BarChart3, Users, Building2, UserPlus, FileBarChart, ShieldCheck, AlertCircle, User } from 'lucide-react';
+import { supabase } from "@/lib/supabaseClient";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 // Layout
 import RootLayout from "@/components/layout/RootLayout";
@@ -21,8 +24,11 @@ import ErrorPage from "@/pages/ErrorPage";
 import InvestorDashboard from "@/pages/dashboard/investor/Dashboard";
 import InvestorICDs from "@/pages/dashboard/investor/ICDs";
 import InvestorBonds from "@/pages/dashboard/investor/Bonds";
+import InvestorREITs from "@/pages/dashboard/investor/REITs";
+import InvestorProducts from "@/pages/dashboard/investor/Products";
+import InvestorTransactions from "@/pages/dashboard/investor/Transactions";
 import InvestorDocuments from "@/pages/dashboard/investor/Documents";
-import InvestorHistory from "@/pages/dashboard/investor/History";
+import ProfileSupport from "@/pages/dashboard/investor/ProfileSupport";
 
 // Partner Dashboard
 import PartnerDashboard from "@/pages/dashboard/partner/Dashboard";
@@ -36,6 +42,13 @@ import AdminUsers from "@/pages/dashboard/admin/Users";
 import AdminICDs from "@/pages/dashboard/admin/ICDs";
 import AdminBonds from "@/pages/dashboard/admin/Bonds";
 
+// Change Password
+import ChangePassword from "@/pages/ChangePassword";
+
+// Register Pages
+import WealthPartnerRegister from '@/pages/WealthPartnerRegister';
+import AdminRegister from '@/pages/AdminRegister';
+
 const queryClient = new QueryClient();
 
 // Dashboard navigation items for each role
@@ -43,8 +56,11 @@ const investorNavItems = [
   { title: "Dashboard", href: "/dashboard/investor", icon: <LayoutDashboard className="h-5 w-5" /> },
   { title: "My ICDs", href: "/dashboard/investor/icds", icon: <CreditCard className="h-5 w-5" /> },
   { title: "My Bonds", href: "/dashboard/investor/bonds", icon: <BarChart3 className="h-5 w-5" /> },
+  { title: "My REITs", href: "/dashboard/investor/reits", icon: <Building2 className="h-5 w-5" /> },
+  { title: "Products", href: "/dashboard/investor/products", icon: <ShieldCheck className="h-5 w-5" /> },
+  { title: "Transactions", href: "/dashboard/investor/transactions", icon: <FileBarChart className="h-5 w-5" /> },
   { title: "Documents", href: "/dashboard/investor/documents", icon: <FileText className="h-5 w-5" /> },
-  { title: "Transaction History", href: "/dashboard/investor/history", icon: <FileBarChart className="h-5 w-5" /> }
+  { title: "Profile & Support", href: "/dashboard/investor/profile-support", icon: <User className="h-5 w-5" /> }
 ];
 
 const partnerNavItems = [
@@ -61,192 +77,134 @@ const adminNavItems = [
   { title: "Bond Management", href: "/dashboard/admin/bonds", icon: <Building2 className="h-5 w-5" /> }
 ];
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <ThemeSwitcher />
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route element={<RootLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-          </Route>
+const router = createBrowserRouter([
+  {
+    element: <RootLayout />,
+    children: [
+      { path: '/', element: <Home /> },
+      { path: '/about', element: <About /> },
+      { path: '/contact', element: <Contact /> },
+    ],
+  },
+  { path: '/login', element: <Login /> },
+  { path: '/register', element: <Register /> },
+  { path: '/WealthPartnerRegister', element: <WealthPartnerRegister /> },
+  { path: '/AdminRegister', element: <AdminRegister /> },
+  { path: '/changepassword', element: <ChangePassword /> },
+  {
+    path: '/dashboard/investor',
+    element: (
+      <ProtectedRoute requiredRole={['Investor']}>
+        <DashboardLayout
+          navItems={investorNavItems}
+          userName="Corporate Investor A"
+          userRole="Investor"
+        />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <InvestorDashboard /> },
+      { path: 'icds', element: <InvestorICDs /> },
+      { path: 'bonds', element: <InvestorBonds /> },
+      { path: 'reits', element: <InvestorREITs /> },
+      { path: 'products', element: <InvestorProducts /> },
+      { path: 'transactions', element: <InvestorTransactions /> },
+      { path: 'documents', element: <InvestorDocuments /> },
+      { path: 'profile-support', element: <ProfileSupport /> },
+    ],
+  },
+  {
+    path: '/dashboard/partner',
+    element: (
+      <ProtectedRoute requiredRole={['Wealth Partner']}>
+        <DashboardLayout
+          navItems={partnerNavItems}
+          userName="Wealth Partner One"
+          userRole="Wealth Partner"
+        />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <PartnerDashboard /> },
+      { path: 'investors', element: <PartnerInvestors /> },
+      { path: 'referrals', element: <PartnerReferrals /> },
+      { path: 'reports', element: <PartnerReports /> },
+    ],
+  },
+  {
+    path: '/dashboard/admin',
+    element: (
+      <ProtectedRoute requiredRole={['Admin Maker', 'Admin Checker']}>
+        <DashboardLayout
+          navItems={adminNavItems}
+          userName="Admin User"
+          userRole="Admin"
+        />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <AdminDashboard /> },
+      { path: 'users', element: <AdminUsers /> },
+      { path: 'icds', element: <AdminICDs /> },
+      { path: 'bonds', element: <AdminBonds /> },
+    ],
+  },
+  { path: '*', element: <ErrorPage /> },
+]);
 
-          {/* Authentication Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
-          {/* Investor Dashboard */}
-          <Route 
-            path="/dashboard/investor" 
-            element={
-              <DashboardLayout 
-                navItems={investorNavItems} 
-                userName="Corporate Investor A" 
-                userRole="Investor"
-              >
-                <InvestorDashboard />
-              </DashboardLayout>
-            } 
-          />
-          <Route 
-            path="/dashboard/investor/icds" 
-            element={
-              <DashboardLayout 
-                navItems={investorNavItems} 
-                userName="Corporate Investor A" 
-                userRole="Investor"
-              >
-                <InvestorICDs />
-              </DashboardLayout>
-            } 
-          />
-          <Route 
-            path="/dashboard/investor/bonds" 
-            element={
-              <DashboardLayout 
-                navItems={investorNavItems} 
-                userName="Corporate Investor A" 
-                userRole="Investor"
-              >
-                <InvestorBonds />
-              </DashboardLayout>
-            } 
-          />
-          <Route 
-            path="/dashboard/investor/documents" 
-            element={
-              <DashboardLayout 
-                navItems={investorNavItems} 
-                userName="Corporate Investor A" 
-                userRole="Investor"
-              >
-                <InvestorDocuments />
-              </DashboardLayout>
-            } 
-          />
-          <Route 
-            path="/dashboard/investor/history" 
-            element={
-              <DashboardLayout 
-                navItems={investorNavItems} 
-                userName="Corporate Investor A" 
-                userRole="Investor"
-              >
-                <InvestorHistory />
-              </DashboardLayout>
-            } 
-          />
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
 
-          {/* Partner Dashboard */}
-          <Route 
-            path="/dashboard/partner" 
-            element={
-              <DashboardLayout 
-                navItems={partnerNavItems} 
-                userName="Wealth Partner One" 
-                userRole="Wealth Partner"
-              >
-                <PartnerDashboard />
-              </DashboardLayout>
-            } 
-          />
-          <Route 
-            path="/dashboard/partner/investors" 
-            element={
-              <DashboardLayout 
-                navItems={partnerNavItems} 
-                userName="Wealth Partner One" 
-                userRole="Wealth Partner"
-              >
-                <PartnerInvestors />
-              </DashboardLayout>
-            } 
-          />
-          <Route 
-            path="/dashboard/partner/referrals" 
-            element={
-              <DashboardLayout 
-                navItems={partnerNavItems} 
-                userName="Wealth Partner One" 
-                userRole="Wealth Partner"
-              >
-                <PartnerReferrals />
-              </DashboardLayout>
-            } 
-          />
-          <Route 
-            path="/dashboard/partner/reports" 
-            element={
-              <DashboardLayout 
-                navItems={partnerNavItems} 
-                userName="Wealth Partner One" 
-                userRole="Wealth Partner"
-              >
-                <PartnerReports />
-              </DashboardLayout>
-            } 
-          />
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary caught an error', error, errorInfo);
+  }
 
-          {/* Admin Dashboard */}
-          <Route 
-            path="/dashboard/admin" 
-            element={
-              <DashboardLayout 
-                navItems={adminNavItems} 
-                userName="Admin User" 
-                userRole="Admin"
-              >
-                <AdminDashboard />
-              </DashboardLayout>
-            } 
-          />
-          <Route 
-            path="/dashboard/admin/users" 
-            element={
-              <DashboardLayout 
-                navItems={adminNavItems} 
-                userName="Admin User" 
-                userRole="Admin"
-              >
-                <AdminUsers />
-              </DashboardLayout>
-            } 
-          />
-          <Route 
-            path="/dashboard/admin/icds" 
-            element={
-              <DashboardLayout 
-                navItems={adminNavItems} 
-                userName="Admin User" 
-                userRole="Admin"
-              >
-                <AdminICDs />
-              </DashboardLayout>
-            } 
-          />
-          <Route 
-            path="/dashboard/admin/bonds" 
-            element={
-              <DashboardLayout 
-                navItems={adminNavItems} 
-                userName="Admin User" 
-                userRole="Admin"
-              >
-                <AdminBonds />
-              </DashboardLayout>
-            } 
-          />
+  render() {
+    if (this.state.hasError) {
+      return <h1>Something went wrong.</h1>;
+    }
 
-          {/* Error Page */}
-          <Route path="*" element={<ErrorPage />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    return this.props.children;
+  }
+}
+
+const App = () => {
+  useEffect(() => {
+    // Test Supabase connection by fetching the current session
+    const testConnection = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Supabase connection error:", error);
+        } else {
+          console.log("Supabase connection successful. Session data:", data);
+        }
+      } catch (err) {
+        console.error("Supabase connection exception:", err);
+      }
+    };
+    testConnection();
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <ThemeSwitcher />
+        <ErrorBoundary>
+          <RouterProvider router={router} />
+        </ErrorBoundary>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

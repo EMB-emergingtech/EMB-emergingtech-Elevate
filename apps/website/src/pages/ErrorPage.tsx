@@ -70,7 +70,7 @@ export default function ErrorPage() {
         {/* Additional links */}
         <div className="mt-8 flex justify-center gap-4 text-sm">
           <Link to="/contact" className="text-primary hover:underline">Contact Support</Link>
-          <Link to="/about" className="text-primary hover:underline">About Elevate</Link>
+          <Link to="/about" className="text-primary hover:underline">About Elevatae</Link>
         </div>
       </div>
 

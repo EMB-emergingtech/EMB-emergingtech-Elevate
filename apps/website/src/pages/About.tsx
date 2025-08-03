@@ -12,7 +12,7 @@ const About = () => {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h1 className="text-4xl font-bold mb-4">About <span className="text-gradient">Elevate</span></h1>
+          <h1 className="text-4xl font-bold mb-4">About <span className="text-gradient">Elevatae</span></h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Redefining wealth management with institutional-grade investment opportunities for corporates and high-net-worth individuals.
           </p>
@@ -27,12 +27,14 @@ const About = () => {
         >
           <div className="bg-card border border-border rounded-xl p-8 shadow-sm premium-card">
             <h2 className="text-2xl font-semibold mb-6">Our Mission</h2>
-            <p className="text-lg mb-6">
-              At Elevate, we're on a mission to democratize access to institutional-grade investment opportunities while maintaining the highest standards of security, transparency, and performance.
-            </p>
-            <p className="text-lg">
-              We believe that wealth management should be accessible, transparent, and efficient. Our platform bridges the gap between corporate treasuries and investment opportunities, enabling seamless Inter-Corporate Deposits and curated bond portfolios through a secure digital interface.
-            </p>
+            <div className="space-y-6 text-lg">
+              <p>
+                At Elevatae, we're on a mission to democratize access to institutional-grade investment opportunities while maintaining the highest standards of security, transparency, and performance.
+              </p>
+              <p>
+                We believe that wealth management should be accessible, transparent, and efficient. Our platform bridges the gap between corporate treasuries and investment opportunities, enabling seamless Inter-Corporate Deposits and curated bond portfolios through a secure digital interface.
+              </p>
+            </div>
           </div>
         </motion.div>
 

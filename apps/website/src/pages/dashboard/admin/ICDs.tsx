@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -20,6 +20,9 @@ import {
 } from '@/components/ui/select';
 import ConfirmationDialog from '@/components/dashboard/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabaseClient';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface ICD {
   id: string;
@@ -48,6 +51,8 @@ const ICDs = () => {
     action: 'approve',
     icdId: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [useSupabase, setUseSupabase] = useState(true);
 
   const [icds, setIcds] = useState<ICD[]>([
     {
@@ -132,6 +137,31 @@ const ICDs = () => {
     }
   ]);
 
+  useEffect(() => {
+    if (!useSupabase) return;
+    setLoading(true);
+    supabase
+      .from('icds')
+      .select('*')
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          setIcds(
+            data.map((icd: any) => ({
+              id: icd.id,
+              investor: icd.investor,
+              amount: icd.amount,
+              interestRate: icd.interestRate,
+              tenure: icd.tenure,
+              maturityDate: icd.maturityDate,
+              status: icd.status,
+              dateRequested: icd.dateRequested
+            }))
+          );
+        }
+        setLoading(false);
+      });
+  }, [useSupabase]);
+
   const handleAction = (action: 'approve' | 'reject', icd: ICD) => {
     setConfirmDialogProps({
       title: `${action === 'approve' ? 'Approve' : 'Reject'} ICD Request`,
@@ -189,6 +219,12 @@ const ICDs = () => {
 
   return (
     <>
+      <div className="flex items-center gap-4 mb-2">
+        <Switch id="useSupabase" checked={useSupabase} onCheckedChange={setUseSupabase} />
+        <Label htmlFor="useSupabase">Use Supabase Data</Label>
+        {loading && <span className="text-xs text-muted-foreground">Loading ICDs...</span>}
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">ICD Requests</h1>
       </div>

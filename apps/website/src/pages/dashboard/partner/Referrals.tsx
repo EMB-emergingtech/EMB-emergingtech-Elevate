@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Copy, Mail, Send, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Referral {
   id: string;
@@ -28,42 +30,70 @@ const Referrals = () => {
   const [referralEmail, setReferralEmail] = useState('');
   const [referralName, setReferralName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [useSupabase, setUseSupabase] = useState(true);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
 
-  const [referrals] = useState<Referral[]>([
-    {
-      id: 'REF001',
-      name: 'Aarav Patel',
-      email: 'aarav@patel.com',
-      status: 'Registered',
-      date: '2025-07-22'
-    },
-    {
-      id: 'REF002',
-      name: 'Priya Singh',
-      email: 'priya@singhinv.com',
-      status: 'Active',
-      date: '2025-04-12',
-      potentialAum: '$1.8M'
-    },
-    {
-      id: 'REF003',
-      name: 'Vikram Malhotra',
-      email: 'vikram@example.com',
-      status: 'Invited',
-      date: '2025-07-28'
-    },
-    {
-      id: 'REF004',
-      name: 'Neha Gupta',
-      email: 'neha@guptaholdings.com',
-      status: 'Invited',
-      date: '2025-07-25'
+  useEffect(() => {
+    if (!useSupabase) {
+      setLoading(false);
+      setReferrals([
+        {
+          id: 'REF001',
+          name: 'Aarav Patel',
+          email: 'aarav@patel.com',
+          status: 'Registered',
+          date: '2025-07-22'
+        },
+        {
+          id: 'REF002',
+          name: 'Priya Singh',
+          email: 'priya@singhinv.com',
+          status: 'Active',
+          date: '2025-04-12',
+          potentialAum: '$1.8M'
+        },
+        {
+          id: 'REF003',
+          name: 'Vikram Malhotra',
+          email: 'vikram@example.com',
+          status: 'Invited',
+          date: '2025-07-28'
+        },
+        {
+          id: 'REF004',
+          name: 'Neha Gupta',
+          email: 'neha@guptaholdings.com',
+          status: 'Invited',
+          date: '2025-07-25'
+        }
+      ]);
+      return;
     }
-  ]);
+    setLoading(true);
+    supabase
+      .from('referrals')
+      .select('*')
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setReferrals(
+            data.map((ref: any) => ({
+              id: ref.id,
+              name: ref.name,
+              email: ref.email,
+              status: ref.status,
+              date: ref.date,
+              potentialAum: ref.potentialAum
+            }))
+          );
+        }
+        setLoading(false);
+      });
+  }, [useSupabase]);
 
-  const handleCopyReferralLink = () => {
-    navigator.clipboard.writeText('https://elevate-demo.com/register?ref=PARTNER123');
-    toast.success('Referral link copied to clipboard');
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText('https://elevatae.com/register?ref=PARTNER123');
+    toast.success('Referral link copied to clipboard!');
   };
 
   const handleSendReferral = (e: React.FormEvent) => {
@@ -139,13 +169,13 @@ const Referrals = () => {
             <div className="flex flex-col md:flex-row gap-4 mb-4">
               <div className="relative flex-1">
                 <Input 
-                  value="https://elevate-demo.com/register?ref=PARTNER123" 
-                  readOnly
-                  className="pr-24"
+                  readOnly 
+                  value="https://elevatae.com/register?ref=PARTNER123" 
+                  className="pr-10"
                 />
                 <Button 
                   className="absolute right-1 top-1 h-8 text-xs"
-                  onClick={handleCopyReferralLink}
+                  onClick={handleCopyLink}
                 >
                   <Copy className="h-3.5 w-3.5 mr-1" /> Copy
                 </Button>
@@ -218,6 +248,11 @@ const Referrals = () => {
             <CardTitle>Referral Activity</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="flex items-center gap-4 mb-2">
+              <Switch id="useSupabase" checked={useSupabase} onCheckedChange={setUseSupabase} />
+              <label htmlFor="useSupabase" className="text-sm">Use Supabase Data</label>
+              {loading && <span className="text-xs text-muted-foreground">Loading referrals...</span>}
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>

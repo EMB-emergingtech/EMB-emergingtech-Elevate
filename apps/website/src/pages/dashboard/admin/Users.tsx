@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -29,6 +29,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import ConfirmationDialog from '@/components/dashboard/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
+import { supabase } from '@/lib/supabaseClient';
 
 interface User {
   id: string;
@@ -52,6 +54,9 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [suspendUserId, setSuspendUserId] = useState('');
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [useSupabase, setUseSupabase] = useState(true); // Toggle for Supabase/mock
 
   const [users, setUsers] = useState<User[]>([
     {
@@ -91,11 +96,10 @@ const Users = () => {
       }
     },
     {
-      id: 'USR004',
+      id: 'partner-001',
       name: 'Wealth Partner One',
-      email: 'partner@elevate.demo',
+      email: 'partner@elevatae.com',
       role: 'Wealth Partner',
-      joinedDate: '2025-01-10',
       status: 'Active',
       permissions: {
         maker: true,
@@ -103,11 +107,10 @@ const Users = () => {
       }
     },
     {
-      id: 'USR005',
+      id: 'admin-001',
       name: 'Admin User',
-      email: 'admin@elevate.demo',
+      email: 'admin@elevatae.com',
       role: 'Admin',
-      joinedDate: '2025-01-01',
       status: 'Active',
       permissions: {
         maker: true,
@@ -139,18 +142,44 @@ const Users = () => {
       }
     },
     {
-      id: 'USR008',
+      id: 'ops-001',
       name: 'Operations Team',
-      email: 'operations@elevate.demo',
-      role: 'Admin',
-      joinedDate: '2025-01-05',
-      status: 'Suspended',
+      email: 'operations@elevatae.com',
+      role: 'Operations',
+      status: 'Active',
       permissions: {
         maker: true,
         checker: true
       }
     }
   ]);
+
+  useEffect(() => {
+    if (!useSupabase) return;
+    setLoading(true);
+    supabase
+      .from('users')
+      .select('*')
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          setUsers(
+            data.map((u: any) => ({
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              role: u.role,
+              joinedDate: u.joinedDate || new Date().toISOString(),
+              status: u.status,
+              permissions: {
+                maker: u.maker ?? false,
+                checker: u.checker ?? false
+              }
+            }))
+          );
+        }
+        setLoading(false);
+      });
+  }, [useSupabase]);
 
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
@@ -194,6 +223,38 @@ const Users = () => {
     setConfirmDialogOpen(false);
   };
 
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    setSelectedUserIds(prev =>
+      checked ? [...prev, userId] : prev.filter(id => id !== userId)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedUserIds(checked ? filteredUsers.map(u => u.id) : []);
+  };
+
+  const handleBulkAction = (action: 'approveKYC' | 'suspend' | 'delete') => {
+    if (action === 'approveKYC') {
+      setUsers(users.map(user =>
+        selectedUserIds.includes(user.id) && user.status === 'KYC Pending'
+          ? { ...user, status: 'Active' }
+          : user
+      ));
+      toast.success('KYC approved for selected users');
+    } else if (action === 'suspend') {
+      setUsers(users.map(user =>
+        selectedUserIds.includes(user.id)
+          ? { ...user, status: user.status === 'Suspended' ? 'Active' : 'Suspended' }
+          : user
+      ));
+      toast.success('Status updated for selected users');
+    } else if (action === 'delete') {
+      setUsers(users.filter(user => !selectedUserIds.includes(user.id)));
+      toast.success('Selected users deleted');
+    }
+    setSelectedUserIds([]);
+  };
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'Active':
@@ -219,8 +280,17 @@ const Users = () => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  const allSelected = filteredUsers.length > 0 && selectedUserIds.length === filteredUsers.length;
+
   return (
     <>
+      {/* Toggle for Supabase or Mock Data */}
+      <div className="flex items-center gap-4 mb-2">
+        <Switch id="useSupabase" checked={useSupabase} onCheckedChange={setUseSupabase} />
+        <Label htmlFor="useSupabase">Use Supabase Data</Label>
+        {loading && <span className="text-xs text-muted-foreground">Loading users...</span>}
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">User Management</h1>
       </div>
@@ -276,11 +346,32 @@ const Users = () => {
       <Card className="premium-card">
         <CardHeader>
           <CardTitle>All Users</CardTitle>
+          {selectedUserIds.length > 0 && (
+            <div className="flex gap-2 mt-2">
+              <Button size="sm" onClick={() => handleBulkAction('approveKYC')}>
+                Approve KYC
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleBulkAction('suspend')}>
+                Suspend
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => handleBulkAction('delete')}>
+                Delete
+              </Button>
+              <span className="ml-2 text-xs text-muted-foreground">{selectedUserIds.length} selected</span>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all users"
+                  />
+                </TableHead>
                 <TableHead>User ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
@@ -294,6 +385,13 @@ const Users = () => {
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
                   <TableRow key={user.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedUserIds.includes(user.id)}
+                        onCheckedChange={checked => handleSelectUser(user.id, checked as boolean)}
+                        aria-label={`Select user ${user.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono">{user.id}</TableCell>
                     <TableCell>{user.name}</TableCell>
                     <TableCell className="font-mono text-xs">{user.email}</TableCell>

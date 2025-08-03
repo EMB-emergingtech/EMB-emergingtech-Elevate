@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -19,6 +19,9 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import InvestorCard from '@/components/dashboard/InvestorCard';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Investor {
   id: string;
@@ -35,88 +38,120 @@ const Investors = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [investors, setInvestors] = useState<Investor[]>([
-    {
-      id: 'INV001',
-      name: 'Rajiv Mehta',
-      company: 'Corporate Investor A',
-      email: 'rajiv.mehta@corpa.com',
-      phone: '+91 98765 43210',
-      dateJoined: '2025-01-15',
-      aum: 4200000,
-      status: 'Active'
-    },
-    {
-      id: 'INV002',
-      name: 'Sunita Sharma',
-      company: 'Corporate Investor B',
-      email: 'sunita@corpb.com',
-      phone: '+91 98765 12345',
-      dateJoined: '2025-02-20',
-      aum: 3800000,
-      status: 'Active'
-    },
-    {
-      id: 'INV003',
-      name: 'John Henderson',
-      company: 'Henderson Enterprises',
-      email: 'john.h@henderson.com',
-      phone: '+91 87654 32109',
-      dateJoined: '2025-03-05',
-      aum: 2500000,
-      status: 'Active'
-    },
-    {
-      id: 'INV004',
-      name: 'Priya Singh',
-      company: 'Singh Investments',
-      email: 'priya@singhinv.com',
-      phone: '+91 76543 21098',
-      dateJoined: '2025-04-12',
-      aum: 1800000,
-      status: 'Active'
-    },
-    {
-      id: 'INV005',
-      name: 'Ramesh Kumar',
-      company: 'Ramesh Enterprises',
-      email: 'ramesh@enterprises.com',
-      phone: '+91 65432 10987',
-      dateJoined: '2025-05-18',
-      aum: 1200000,
-      status: 'Active'
-    },
-    {
-      id: 'INV006',
-      name: 'Anita Desai',
-      company: 'Desai Holdings',
-      email: 'anita@desai.com',
-      phone: '+91 54321 09876',
-      dateJoined: '2025-06-25',
-      aum: 900000,
-      status: 'KYC Pending'
-    },
-    {
-      id: 'INV007',
-      name: 'Michael Wong',
-      company: 'Wong Investments',
-      email: 'michael@wonginv.com',
-      phone: '+91 43210 98765',
-      dateJoined: '2025-07-10',
-      aum: 600000,
-      status: 'KYC Pending'
-    },
-    {
-      id: 'INV008',
-      name: 'Aarav Patel',
-      company: 'Patel Group',
-      email: 'aarav@patel.com',
-      phone: '+91 32109 87654',
-      dateJoined: '2025-07-22',
-      aum: 0,
-      status: 'KYC Pending'
+  const [investors, setInvestors] = useState<Investor[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [useSupabase, setUseSupabase] = useState(false);
+
+  useEffect(() => {
+    setUseSupabase(false);
+    if (!useSupabase) {
+      setLoading(false);
+      setInvestors([
+        {
+          id: 'INV001',
+          name: 'Rajiv Mehta',
+          company: 'Corporate Investor A',
+          email: 'rajiv.mehta@corpa.com',
+          phone: '+91 98765 43210',
+          dateJoined: '2025-01-15',
+          aum: 4200000,
+          status: 'Active'
+        },
+        {
+          id: 'INV002',
+          name: 'Sunita Sharma',
+          company: 'Corporate Investor B',
+          email: 'sunita@corpb.com',
+          phone: '+91 98765 12345',
+          dateJoined: '2025-02-20',
+          aum: 3800000,
+          status: 'Active'
+        },
+        {
+          id: 'INV003',
+          name: 'John Henderson',
+          company: 'Henderson Enterprises',
+          email: 'john.h@henderson.com',
+          phone: '+91 87654 32109',
+          dateJoined: '2025-03-05',
+          aum: 2500000,
+          status: 'Active'
+        },
+        {
+          id: 'INV004',
+          name: 'Priya Singh',
+          company: 'Singh Investments',
+          email: 'priya@singhinv.com',
+          phone: '+91 76543 21098',
+          dateJoined: '2025-04-12',
+          aum: 1800000,
+          status: 'Active'
+        },
+        {
+          id: 'INV005',
+          name: 'Ramesh Kumar',
+          company: 'Ramesh Enterprises',
+          email: 'ramesh@enterprises.com',
+          phone: '+91 65432 10987',
+          dateJoined: '2025-05-18',
+          aum: 1200000,
+          status: 'Active'
+        },
+        {
+          id: 'INV006',
+          name: 'Anita Desai',
+          company: 'Desai Holdings',
+          email: 'anita@desai.com',
+          phone: '+91 54321 09876',
+          dateJoined: '2025-06-25',
+          aum: 900000,
+          status: 'KYC Pending'
+        },
+        {
+          id: 'INV007',
+          name: 'Michael Wong',
+          company: 'Wong Investments',
+          email: 'michael@wonginv.com',
+          phone: '+91 43210 98765',
+          dateJoined: '2025-07-10',
+          aum: 600000,
+          status: 'KYC Pending'
+        },
+        {
+          id: 'INV008',
+          name: 'Aarav Patel',
+          company: 'Patel Group',
+          email: 'aarav@patel.com',
+          phone: '+91 32109 87654',
+          dateJoined: '2025-07-22',
+          aum: 0,
+          status: 'KYC Pending'
+        }
+      ]);
+      return;
     }
-  ]);
+    setLoading(true);
+    supabase
+      .from('investors')
+      .select('*')
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setInvestors(
+            data.map((inv: any) => ({
+              id: inv.id,
+              name: inv.name,
+              company: inv.company,
+              email: inv.email,
+              phone: inv.phone,
+              dateJoined: inv.dateJoined,
+              aum: inv.aum,
+              status: inv.status
+            }))
+          );
+        }
+        setLoading(false);
+      });
+  }, [useSupabase]);
 
   const handleInvestorAdded = (newInvestor: Investor) => {
     setInvestors([newInvestor, ...investors]);
@@ -148,6 +183,11 @@ const Investors = () => {
 
   return (
     <>
+      <div className="flex items-center gap-4 mb-2">
+        <Switch id="useSupabase" checked={useSupabase} onCheckedChange={setUseSupabase} />
+        <Label htmlFor="useSupabase">Use Supabase Data</Label>
+        {loading && <span className="text-xs text-muted-foreground">Loading investors...</span>}
+      </div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">My Investors</h1>
         <Button 

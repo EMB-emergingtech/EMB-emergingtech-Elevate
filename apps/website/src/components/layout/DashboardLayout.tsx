@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { 
   Bell, 
   ChevronDown, 
@@ -8,7 +8,8 @@ import {
   User, 
   Settings,
   Menu,
-  X
+  X,
+  Package
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -25,7 +26,6 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardLayoutProps {
-  children: React.ReactNode;
   navItems: {
     title: string;
     href: string;
@@ -35,7 +35,7 @@ interface DashboardLayoutProps {
   userRole: string;
 }
 
-const DashboardLayout = ({ children, navItems, userName, userRole }: DashboardLayoutProps) => {
+const DashboardLayout = ({ navItems, userName, userRole }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -245,7 +245,7 @@ const DashboardLayout = ({ children, navItems, userName, userRole }: DashboardLa
 
         {/* Main Content */}
         <main className="flex-1 p-4 md:p-6 overflow-auto">
-          {children}
+          <Outlet />
         </main>
       </div>
 

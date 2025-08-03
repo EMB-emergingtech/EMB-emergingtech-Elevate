@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   BarChart3, 
@@ -8,7 +8,9 @@ import {
   FileText, 
   Activity,
   ArrowRight,
-  Building
+  Building,
+  Plus,
+  Eye
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,99 +23,58 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import StatCard from '@/components/dashboard/StatCard';
-import AIAssistant from '@/components/dashboard/AIAssistant';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from 'recharts';
+import { supabase } from '@/lib/supabaseClient';
+
+interface Investment {
+  id: string;
+  type: 'ICD' | 'Bond' | 'REIT';
+  amount: number;
+  interestRate: number;
+  maturityDate: string;
+  status: 'Active' | 'Pending' | 'Matured' | 'Submitted' | 'In-Review' | 'Accepted' | 'Rejected' | 'Counter-offer' | 'Agreement Pending' | 'Payment Update';
+}
+
+interface Bond {
+  id: string;
+  companyName: string;
+  interestRate: number;
+  tenure: number;
+  minInvestment: number;
+  details: string;
+}
+
+const getStatusBadgeClass = (status: Investment['status']) => {
+  switch (status) {
+    case 'Active':
+      return 'bg-green-100 text-green-800';
+    case 'Pending':
+    case 'Submitted':
+    case 'In-Review':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'Matured':
+      return 'bg-blue-100 text-blue-800';
+    case 'Rejected':
+      return 'bg-red-100 text-red-800';
+    case 'Agreement Pending':
+    case 'Payment Update':
+    case 'Counter-offer':
+      return 'bg-purple-100 text-purple-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
 
 const Dashboard = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const [transactions] = useState([
-    {
-      id: 'TRX001',
-      date: '2025-07-25',
-      transactionId: 'ICD00123',
-      type: 'ICD Placed',
-      amount: 1000000,
-      status: 'Completed'
-    },
-    {
-      id: 'TRX002',
-      date: '2025-07-22',
-      transactionId: 'BND00456',
-      type: 'Bond Purchase',
-      amount: 250000,
-      status: 'Completed'
-    },
-    {
-      id: 'TRX003',
-      date: '2025-07-15',
-      transactionId: 'INT00789',
-      type: 'Interest Credit',
-      amount: 18750,
-      status: 'Completed'
-    },
-    {
-      id: 'TRX004',
-      date: '2025-07-10',
-      transactionId: 'BND00457',
-      type: 'Bond Purchase',
-      amount: 500000,
-      status: 'Completed'
-    },
-    {
-      id: 'TRX005',
-      date: '2025-07-01',
-      transactionId: 'ICD00124',
-      type: 'ICD Matured',
-      amount: 750000,
-      status: 'Completed'
-    }
-  ]);
+  // Replace with actual logged-in user email in production
+  const investorEmail = 'investor@company.com';
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [pendingActions] = useState([
-    { id: 1, description: 'ICD request #ICD004 maturing in 7 days.', priority: 'medium' },
-    { id: 2, description: 'Bond coupon payment of $12,500 due tomorrow.', priority: 'high' },
-    { id: 3, description: 'Complete KYC renewal for the current financial year.', priority: 'low' },
-    { id: 4, description: 'Review new bond offerings in the infrastructure sector.', priority: 'medium' }
-  ]);
-
-  const [icdOpportunities] = useState([
-    {
-      id: 'ICDO001',
-      companyName: 'Alpha Manufacturing Ltd.',
-      interestRate: 8.75,
-      tenure: 90,
-      minInvestment: 200000,
-      details: 'AAA-rated manufacturing company with strong financials and steady growth.'
-    },
-    {
-      id: 'ICDO002',
-      companyName: 'Beta Technologies Inc.',
-      interestRate: 9.00,
-      tenure: 180,
-      minInvestment: 500000,
-      details: 'Technology company with 15+ years of operation and consistent profit margins.'
-    },
-    {
-      id: 'ICDO003',
-      companyName: 'Gamma Healthcare Services',
-      interestRate: 8.50,
-      tenure: 60,
-      minInvestment: 300000,
-      details: 'Leading healthcare provider with government contracts and stable revenue streams.'
-    },
-    {
-      id: 'ICDO004',
-      companyName: 'Delta Energy Solutions',
-      interestRate: 9.25,
-      tenure: 120,
-      minInvestment: 400000,
-      details: 'Renewable energy company with strong order book and international presence.'
-    }
-  ]);
-
-  const [bondOpportunities] = useState([
+  const [bonds] = useState<Bond[]>([
     {
       id: 'BNDO001',
       companyName: 'Omega Infrastructure Ltd.',
@@ -140,26 +101,205 @@ const Dashboard = () => {
     }
   ]);
 
-  const handleViewDetails = (id: string, type: string) => {
-    toast.info(`Viewing details for ${type} opportunity: ${id}`);
-    // In a real application, this would open a details page or modal
+  const pendingActions = [
+    { id: 1, description: 'Review and sign the agreement for ICD004.', priority: 'high' },
+    { id: 2, description: 'Complete payment for BND002 before the deadline.', priority: 'medium' },
+    { id: 3, description: 'Acknowledge maturity of ICD005.', priority: 'low' },
+  ];
+
+  const transactions = [
+    { id: 1, date: '2025-07-28', transactionId: 'TXN12345', type: 'Deposit', amount: 500000, status: 'Completed' },
+    { id: 2, date: '2025-07-25', transactionId: 'TXN12346', type: 'Withdrawal', amount: 100000, status: 'Completed' },
+    { id: 3, date: '2025-07-20', transactionId: 'TXN12347', type: 'Interest', amount: 12500, status: 'Completed' },
+  ];
+
+  const totalInvestedValue = investments
+    .filter(inv => inv.status === 'Active' || inv.status === 'Agreement Pending')
+    .reduce((acc, inv) => acc + inv.amount, 0);
+
+  const investmentBreakdown = investments
+    .filter(inv => inv.status === 'Active' || inv.status === 'Agreement Pending')
+    .reduce((acc, investment) => {
+      const existing = acc.find(item => item.name === investment.type);
+      if (existing) {
+        existing.value += investment.amount;
+      } else {
+        acc.push({ name: investment.type, value: investment.amount });
+      }
+      return acc;
+    }, [] as { name: string; value: number }[]);
+
+  const COLORS = {
+    ICD: '#16a34a', // green-600
+    Bond: '#2563eb', // blue-600
+    REIT: '#ca8a04' // yellow-600
   };
 
-  const handleViewAllICDs = () => {
-    navigate('/dashboard/investor/icds');
+  const handleAction = (action: string, id: string) => {
+    toast.info(`${action} for investment ${id}`);
   };
 
-  const handleViewAllBonds = () => {
-    navigate('/dashboard/investor/bonds');
-  };
+  useEffect(() => {
+    async function fetchInvestments() {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data, error } = await supabase
+          .from('investments')
+          .select('*')
+          .eq('investor', investorEmail)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setInvestments(data.map(inv => ({
+            id: inv.id,
+            type: inv.type,
+            amount: Number(inv.amount),
+            interestRate: inv.roi ? Number(inv.roi) : 0,
+            maturityDate: inv.duration || '',
+            status: inv.status || 'Pending',
+          })));
+        } else {
+          setInvestments([
+            {
+              id: 'ICD001',
+              type: 'ICD',
+              amount: 2000000,
+              interestRate: 8.75,
+              maturityDate: '2025-10-28',
+              status: 'Active'
+            },
+            {
+              id: 'BND001',
+              type: 'Bond',
+              amount: 500000,
+              interestRate: 8.25,
+              maturityDate: '2028-08-15',
+              status: 'Active'
+            },
+            {
+              id: 'ICD004',
+              type: 'ICD',
+              amount: 750000,
+              interestRate: 8.00,
+              maturityDate: '2025-08-06',
+              status: 'Agreement Pending'
+            },
+            {
+              id: 'REIT001',
+              type: 'REIT',
+              amount: 1250000,
+              interestRate: 10.5, // Representing dividend yield
+              maturityDate: 'N/A',
+              status: 'Active'
+            },
+            {
+              id: 'BND002',
+              type: 'Bond',
+              amount: 250000,
+              interestRate: 7.65,
+              maturityDate: '2026-09-22',
+              status: 'Active'
+            },
+            {
+              id: 'ICD005',
+              type: 'ICD',
+              amount: 1000000,
+              interestRate: 7.75,
+              maturityDate: '2025-07-01',
+              status: 'Matured'
+            },
+            {
+              id: 'ICD006',
+              type: 'ICD',
+              amount: 500000,
+              interestRate: 8.25,
+              maturityDate: '2025-09-28',
+              status: 'Submitted'
+            },
+          ]);
+        }
+      } catch (err) {
+        setError('Could not fetch investments from backend. Showing mock data.');
+        setInvestments([
+          {
+            id: 'ICD001',
+            type: 'ICD',
+            amount: 2000000,
+            interestRate: 8.75,
+            maturityDate: '2025-10-28',
+            status: 'Active'
+          },
+          {
+            id: 'BND001',
+            type: 'Bond',
+            amount: 500000,
+            interestRate: 8.25,
+            maturityDate: '2028-08-15',
+            status: 'Active'
+          },
+          {
+            id: 'ICD004',
+            type: 'ICD',
+            amount: 750000,
+            interestRate: 8.00,
+            maturityDate: '2025-08-06',
+            status: 'Agreement Pending'
+          },
+          {
+            id: 'REIT001',
+            type: 'REIT',
+            amount: 1250000,
+            interestRate: 10.5, // Representing dividend yield
+            maturityDate: 'N/A',
+            status: 'Active'
+          },
+          {
+            id: 'BND002',
+            type: 'Bond',
+            amount: 250000,
+            interestRate: 7.65,
+            maturityDate: '2026-09-22',
+            status: 'Active'
+          },
+          {
+            id: 'ICD005',
+            type: 'ICD',
+            amount: 1000000,
+            interestRate: 7.75,
+            maturityDate: '2025-07-01',
+            status: 'Matured'
+          },
+          {
+            id: 'ICD006',
+            type: 'ICD',
+            amount: 500000,
+            interestRate: 8.25,
+            maturityDate: '2025-09-28',
+            status: 'Submitted'
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchInvestments();
+  }, [investorEmail]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
 
   return (
     <div className="space-y-6">
-      <AIAssistant />
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Investor Dashboard</h1>
         <Button className="bg-primary hover:bg-primary/90 text-primary-foreground elevate-glow">
-          Generate Report
+          <Plus className="mr-2 h-4 w-4" /> New Investment
         </Button>
       </div>
 
@@ -171,186 +311,146 @@ const Dashboard = () => {
         transition={{ duration: 0.5 }}
       >
         <StatCard 
-          title="Total Investment" 
-          value="$5,250,000" 
+          title="Total Invested Value" 
+          value={`$${totalInvestedValue.toLocaleString()}`} 
           icon={<DollarSign className="h-5 w-5" />} 
-          change={{ value: "8.3%", positive: true }}
+          change={{ value: "5.2%", positive: true }}
         />
         <StatCard 
-          title="Active ICDs" 
-          value="3" 
-          icon={<CreditCard className="h-5 w-5" />} 
+          title="Portfolio Yield" 
+          value="8.95%" 
+          icon={<BarChart3 className="h-5 w-5" />} 
         />
         <StatCard 
-          title="Matured Investments" 
-          value="12" 
+          title="Upcoming Maturities" 
+          value="$750,000" 
           icon={<Calendar className="h-5 w-5" />} 
         />
         <StatCard 
-          title="Annualized Return" 
-          value="8.75%" 
-          icon={<BarChart3 className="h-5 w-5" />} 
-          change={{ value: "0.25%", positive: true }}
+          title="Pending Actions" 
+          value="2" 
+          icon={<Activity className="h-5 w-5" />} 
         />
       </motion.div>
 
-      {/* ICD Opportunities */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <Card className="premium-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Inter-Corporate Deposits (ICDs)</CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-primary text-primary"
-              onClick={handleViewAllICDs}
-            >
-              View All <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {icdOpportunities.map((icd) => (
-                <Card key={icd.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Building className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold text-sm line-clamp-1" title={icd.companyName}>
-                        {icd.companyName}
-                      </h3>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Interest Rate:</span>
-                        <span className="font-medium">{icd.interestRate}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Tenure:</span>
-                        <span className="font-medium">{icd.tenure} days</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Min. Investment:</span>
-                        <span className="font-medium">${icd.minInvestment.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <Button 
-                        size="sm" 
-                        className="w-full bg-primary/10 hover:bg-primary/20 text-primary"
-                        onClick={() => handleViewDetails(icd.id, 'ICD')}
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Recent Activity */}
+        <motion.div
+          className="lg:col-span-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="premium-card h-full">
+            <CardHeader>
+              <CardTitle>Recent Investment Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {investments.slice(0, 5).map((investment) => (
+                    <TableRow key={investment.id}>
+                      <TableCell>
+                        <div className="font-medium">{investment.type}</div>
+                        <div className="text-xs text-muted-foreground font-mono">{investment.id}</div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">${investment.amount.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <span className={getStatusBadgeClass(investment.status)}>
+                          {investment.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleAction('View Details', investment.id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-      {/* Bond Opportunities */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-      >
-        <Card className="premium-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Unlisted Bonds</CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-primary text-primary"
-              onClick={handleViewAllBonds}
-            >
-              View All <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {bondOpportunities.map((bond) => (
-                <Card key={bond.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Building className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold text-sm line-clamp-1" title={bond.companyName}>
-                        {bond.companyName}
-                      </h3>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Interest Rate:</span>
-                        <span className="font-medium">{bond.interestRate}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Tenure:</span>
-                        <span className="font-medium">{bond.tenure} months</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Min. Investment:</span>
-                        <span className="font-medium">${bond.minInvestment.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <Button 
-                        size="sm" 
-                        className="w-full bg-primary/10 hover:bg-primary/20 text-primary"
-                        onClick={() => handleViewDetails(bond.id, 'Bond')}
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+        {/* Investment Breakdown */}
+        <motion.div
+          className="lg:col-span-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Card className="premium-card h-full">
+            <CardHeader>
+              <CardTitle>Investment Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div style={{ width: '100%', height: 250 }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={investmentBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                      label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                        const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                        const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                        return (
+                          <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="12">
+                            {`${(percent * 100).toFixed(0)}%`}
+                          </text>
+                        );
+                      }}
+                    >
+                      {investmentBreakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      formatter={(value: number) => `$${value.toLocaleString()}`}
+                      cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                      contentStyle={{
+                        background: 'rgba(30, 41, 59, 0.8)',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        color: '#fff'
+                      }}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
 
-      {/* Portfolio Overview and Pending Actions */}
+      {/* Quick Actions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
-        <Card className="lg:col-span-2 premium-card">
-          <CardHeader>
-            <CardTitle>Portfolio Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
-              <img 
-                src="https://storage.googleapis.com/fenado-ai-farm-public/generated/fd0ec364-3b60-45f8-99f1-d4a2e4ddd917.webp"
-                alt="Portfolio Distribution"
-                className="w-64 h-64"
-              />
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-primary"></div>
-                  <span>ICDs (65%): $3,412,500</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-muted"></div>
-                  <span>Bonds (35%): $1,837,500</span>
-                </div>
-                <div className="mt-6 pt-6 border-t border-border">
-                  <p className="text-sm text-muted-foreground">
-                    Your portfolio is balanced with a focus on high-yield ICDs while maintaining liquidity through strategic bond investments.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="premium-card">
           <CardHeader>
             <CardTitle>Pending Actions</CardTitle>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -15,6 +15,8 @@ import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format, subMonths } from 'date-fns';
+import { Switch } from '@/components/ui/switch';
+import { supabase } from '@/lib/supabaseClient';
 
 const Reports = () => {
   const { toast } = useToast();
@@ -22,60 +24,46 @@ const Reports = () => {
     from: subMonths(new Date(), 3),
     to: new Date()
   });
+  const [loading, setLoading] = useState(false);
+  const [useSupabase, setUseSupabase] = useState(true);
+  const [commissionData, setCommissionData] = useState<any[]>([]);
+  const [investorPerformance, setInvestorPerformance] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!useSupabase) {
+      setLoading(false);
+      setCommissionData([
+        { month: 'Apr 2025', icdCommission: 1250, bondCommission: 750, totalCommission: 2000 },
+        { month: 'May 2025', icdCommission: 1500, bondCommission: 800, totalCommission: 2300 },
+        { month: 'Jun 2025', icdCommission: 1750, bondCommission: 950, totalCommission: 2700 },
+        { month: 'Jul 2025', icdCommission: 2100, bondCommission: 1400, totalCommission: 3500 }
+      ]);
+      setInvestorPerformance([
+        { name: 'Corporate Investor A', aum: 4200000, commission: 4200, products: 'ICDs, Bonds', performance: '+8.3%' },
+        { name: 'Corporate Investor B', aum: 3800000, commission: 3800, products: 'ICDs', performance: '+7.2%' },
+        { name: 'John Henderson', aum: 2500000, commission: 2500, products: 'Bonds', performance: '+5.6%' },
+        { name: 'Priya Singh', aum: 1800000, commission: 1800, products: 'ICDs, Bonds', performance: '+4.9%' },
+        { name: 'Ramesh Kumar', aum: 1200000, commission: 1200, products: 'Bonds', performance: '+6.1%' }
+      ]);
+      return;
+    }
+    setLoading(true);
+    Promise.all([
+      supabase.from('commission_reports').select('*'),
+      supabase.from('investor_performance').select('*')
+    ]).then(([commRes, perfRes]) => {
+      if (!commRes.error && commRes.data) setCommissionData(commRes.data);
+      if (!perfRes.error && perfRes.data) setInvestorPerformance(perfRes.data);
+      setLoading(false);
+    });
+  }, [useSupabase]);
 
   const handleExportReport = () => {
     toast.success('Commission report exported successfully');
   };
 
-  // Mock commission data
-  const commissionData = [
-    { month: 'Apr 2025', icdCommission: 1250, bondCommission: 750, totalCommission: 2000 },
-    { month: 'May 2025', icdCommission: 1500, bondCommission: 800, totalCommission: 2300 },
-    { month: 'Jun 2025', icdCommission: 1750, bondCommission: 950, totalCommission: 2700 },
-    { month: 'Jul 2025', icdCommission: 2100, bondCommission: 1400, totalCommission: 3500 }
-  ];
-
-  // Mock investor performance data
-  const investorPerformance = [
-    { 
-      name: 'Corporate Investor A',
-      aum: 4200000,
-      commission: 4200,
-      products: 'ICDs, Bonds',
-      performance: '+8.3%'
-    },
-    { 
-      name: 'Corporate Investor B',
-      aum: 3800000,
-      commission: 3800,
-      products: 'ICDs',
-      performance: '+7.2%'
-    },
-    { 
-      name: 'John Henderson',
-      aum: 2500000,
-      commission: 2500,
-      products: 'Bonds',
-      performance: '+5.6%'
-    },
-    { 
-      name: 'Priya Singh',
-      aum: 1800000,
-      commission: 1800,
-      products: 'ICDs, Bonds',
-      performance: '+4.9%'
-    },
-    { 
-      name: 'Ramesh Kumar',
-      aum: 1200000,
-      commission: 1200,
-      products: 'Bonds',
-      performance: '+6.1%'
-    }
-  ];
-
   // Calculate total commission
-  const totalCommission = commissionData.reduce((sum, item) => sum + item.totalCommission, 0);
+  const totalCommission = commissionData.reduce((sum, item) => sum + (item.totalCommission || 0), 0);
 
   // Mock chart data - we would use a real chart component in production
   const chartData = {
@@ -100,6 +88,11 @@ const Reports = () => {
 
   return (
     <>
+      <div className="flex items-center gap-4 mb-2">
+        <Switch id="useSupabase" checked={useSupabase} onCheckedChange={setUseSupabase} />
+        <label htmlFor="useSupabase" className="text-sm">Use Supabase Data</label>
+        {loading && <span className="text-xs text-muted-foreground">Loading reports...</span>}
+      </div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Performance Reports</h1>
         <Button 
