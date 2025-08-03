@@ -1,331 +1,564 @@
-# Bun Monorepo Template
+# Elevate Wealth Management Platform - Software Requirements Document
 
-A modern full-stack monorepo template built with [Bun](https://bun.sh), featuring a React + Vite + TypeScript website with Tailwind CSS, Radix UI components, and a comprehensive theme system.
+## 1. Introduction
 
-> **Note**: To contribute or make changes to the code, please fork the repository first and make your changes in your own copy.
+### 1.1 Purpose
+The Elevate Wealth Management Platform is being developed to provide a comprehensive digital solution for wealth management operations, enabling seamless interactions between investors, wealth partners, and administrators. The platform aims to streamline investment processes, enhance client relationships, and provide robust administrative oversight for alternative investment products including Inter-Corporate Deposits (ICDs), Bonds, and Real Estate Investment Trusts (REITs).
 
-## 🏗️ Architecture
+### 1.2 Scope
+The system will provide:
+- **Multi-role user management** with distinct dashboards for Investors, Wealth Partners, and Administrators
+- **Investment product management** for ICDs, Bonds, and REITs
+- **KYC (Know Your Customer) processing** with automated workflows
+- **Referral and commission tracking** for wealth partners
+- **Real-time notifications** and approval workflows
+- **Comprehensive reporting** and analytics
 
-This is a monorepo containing:
-- **Website** (`apps/website/`): React + Vite + TypeScript application with modern UI components and a sophisticated theme system
+The system will **NOT** include:
+- Direct payment processing (will integrate with external payment gateways)
+- Real-time trading capabilities
+- Cryptocurrency investments
+- Insurance products
 
-## 🎨 Theme System
+### 1.3 Definitions, Acronyms, and Abbreviations
+- **ICD**: Inter-Corporate Deposit - Short-term lending instruments between corporations
+- **REIT**: Real Estate Investment Trust - Investment vehicles for real estate properties
+- **KYC**: Know Your Customer - Identity verification and due diligence process
+- **AUM**: Assets Under Management
+- **ROI**: Return on Investment
+- **API**: Application Programming Interface
+- **SPA**: Single Page Application
+- **RLS**: Row Level Security
 
-The website features a comprehensive theme system with:
+### 1.4 References
+- Business Requirements Document (BRD) - Internal Document
+- UI/UX Design Specifications - Figma/Design System
+- Supabase Documentation: https://supabase.com/docs
+- React Documentation: https://reactjs.org/docs
+- TypeScript Standards: https://www.typescriptlang.org/docs
 
-- **5 Beautiful Color Themes**: Default Orange, Ocean Blue, Forest Green, Sunset Pink, Vintage Amber
-- **Dark/Light Mode**: Full support for both modes across all themes
-- **Semantic Color Variables**: CSS custom properties for consistent theming
-- **Cross-Browser Scrollbars**: Styled scrollbars that match the theme
-- **Global Theme Switcher**: Available on all pages
-- **Smooth Transitions**: 0.3s ease transitions between themes
+### 1.5 Overview
+This document is structured to provide detailed technical requirements across system architecture, functional capabilities, user interfaces, and operational constraints. Sections 2-10 detail the comprehensive requirements for successful platform implementation.
 
-### Available Themes
+### 1.6 Tech Stack
+**Frontend:**
+- React 18 with TypeScript
+- Vite 6 (Build Tool)
+- React Router DOM 7 (Routing)
+- Tailwind CSS (Styling)
+- Radix UI (Component Library)
+- React Hook Form + Zod (Form Management)
+- TanStack Query (Data Fetching)
+- Framer Motion (Animations)
+- Lucide React (Icons)
 
-| Theme | Primary Color | Mood | Best For |
-|-------|---------------|------|----------|
-| 🔥 Default Orange | `25 84% 42%` | Energetic & welcoming | Creative applications |
-| 🌊 Ocean Blue | `200 84% 42%` | Calm & professional | Business applications |
-| 🌲 Forest Green | `160 84% 42%` | Natural & calming | Environmental apps |
-| 🌅 Sunset Pink | `320 84% 42%` | Warm & vibrant | Creative platforms |
-| 🎨 Vintage Amber | `45 84% 42%` | Warm & nostalgic | Retro applications |
+**Backend & Database:**
+- Supabase (Backend-as-a-Service)
+- PostgreSQL (Database)
+- Row Level Security (RLS)
+- Real-time Subscriptions
 
-For detailed theme documentation, see [apps/website/README.md](apps/website/README.md).
+**Development Tools:**
+- Bun (Package Manager & Runtime)
+- ESLint 9 (Linting)
+- PostCSS + Autoprefixer
+- Git (Version Control)
 
-## 📋 Prerequisites
+## 2. Overall Description
 
-Before getting started, ensure you have the following tools installed:
+### 2.1 Product Perspective
+The Elevate Wealth Management Platform is a **standalone web application** that serves as the primary interface for wealth management operations. The system integrates with:
 
-### Required Tools
+**External Dependencies:**
+- Supabase Cloud (Database & Authentication)
+- Email Service Providers (Notifications)
+- Payment Gateway APIs (Future integration)
+- Document Storage Services (KYC documents)
 
-1. **Node.js** (v18.0 or higher)
-   ```bash
-   # Check your Node.js version
-   node -v
-   ```
-   - Download from [nodejs.org](https://nodejs.org/)
-   - Or use [nvm](https://github.com/nvm-sh/nvm) to manage multiple Node.js versions
+### 2.2 Product Functions
+**High-level Capabilities:**
+- Multi-tenant user authentication with role-based access control
+- Investment product catalog and request management
+- Automated KYC workflows with document management
+- Referral tracking and commission calculations
+- Real-time dashboard analytics and reporting
+- Notification and approval management systems
+- Comprehensive audit trails and compliance tracking
 
-2. **Bun** (Latest version recommended)
-   ```bash
-   # Install Bun
-   curl -fsSL https://bun.sh/install | bash
-   
-   # Or on macOS with Homebrew
-   brew install bun
-   
-   # Verify installation
-   bun --version
-   ```
+### 2.3 User Classes and Characteristics
 
-3. **Git**
-   ```bash
-   # Check if Git is installed
-   git --version
-   ```
-   - Download from [git-scm.com](https://git-scm.com/) if not installed
+**Administrators:**
+- Technical proficiency: High
+- Responsibilities: System oversight, user approval, investment management
+- Access level: Full system access with administrative privileges
 
-## 🚀 Getting Started
+**Wealth Partners:**
+- Technical proficiency: Medium
+- Responsibilities: Client acquisition, referral management, commission tracking
+- Access level: Partner-specific dashboard with referral tools
 
-### 1. Clone and Install
+**Investors:**
+- Technical proficiency: Low to Medium
+- Responsibilities: Investment management, KYC compliance, portfolio monitoring
+- Access level: Personal dashboard with investment tools
 
-```bash
-# Clone the repository
-git clone <your-repo-url>
-cd webapp-bun-monorepo-v2
+### 2.4 Operating Environment
+**Browser Compatibility:**
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
 
-# Install all dependencies (runs for entire monorepo)
-bun install
+**Device Support:**
+- Desktop (Primary): 1920x1080 and above
+- Tablet: 768px and above
+- Mobile: 375px and above (Responsive design)
+
+**Server Stack:**
+- Supabase Cloud Infrastructure
+- PostgreSQL 13+
+- Node.js 18+ (Development environment)
+
+### 2.5 Design and Implementation Constraints
+**Technical Constraints:**
+- Must use Supabase for backend services
+- React-based SPA architecture required
+- TypeScript mandatory for type safety
+- Responsive design for all screen sizes
+- WCAG 2.1 AA accessibility compliance
+
+**Security Protocols:**
+- JWT-based authentication
+- Row Level Security (RLS) for data access
+- HTTPS encryption for all communications
+- Data validation on client and server side
+
+**Coding Standards:**
+- ESLint configuration for code quality
+- TypeScript strict mode enabled
+- Consistent component architecture patterns
+- Comprehensive error handling and logging
+
+### 2.6 Assumptions and Dependencies
+**Assumptions:**
+- Users have stable internet connectivity
+- Modern browser support is available
+- Supabase services maintain 99.9% uptime
+- Email delivery services are reliable
+
+**Dependencies:**
+- Supabase API availability and performance
+- Third-party authentication providers
+- External notification services
+- Regulatory compliance frameworks
+
+## 3. System Features and Requirements
+
+### 3.1 Functional Requirements
+
+#### 3.1.1 User Authentication and Authorization
+**Description:** Secure user registration, login, and role-based access control
+
+**Inputs:**
+- Email address and password
+- User role selection
+- Optional referral codes
+
+**Outputs:**
+- Authentication tokens
+- User profile with assigned role
+- Dashboard redirection based on role
+
+**Preconditions:**
+- User must provide valid email address
+- Password must meet security requirements
+
+**Postconditions:**
+- User session established
+- Role-based permissions activated
+- User redirected to appropriate dashboard
+
+**User Flow:**
+1. User accesses registration/login page
+2. Completes authentication form
+3. System validates credentials
+4. Role-based dashboard loads
+
+#### 3.1.2 Investment Product Management
+**Description:** Comprehensive management of ICDs, Bonds, and REITs
+
+**Inputs:**
+- Investment product details
+- Minimum investment amounts
+- Interest rates and tenure information
+- Risk classifications
+
+**Outputs:**
+- Product catalog
+- Investment request forms
+- Approval workflows
+- Investment confirmations
+
+**Preconditions:**
+- User must be authenticated
+- KYC must be completed for investment actions
+
+**Postconditions:**
+- Investment products displayed
+- Investment requests processed
+- Portfolio updated
+
+#### 3.1.3 KYC Processing System
+**Description:** Automated Know Your Customer verification workflow
+
+**Inputs:**
+- Personal identification documents
+- Business registration certificates
+- Address verification documents
+- Regulatory compliance forms
+
+**Outputs:**
+- KYC status updates
+- Approval/rejection notifications
+- Compliance reports
+- Document storage confirmations
+
+**Preconditions:**
+- User account must exist
+- Required documents must be provided
+
+**Postconditions:**
+- KYC status updated
+- User permissions adjusted
+- Compliance records maintained
+
+#### 3.1.4 Referral and Commission Tracking
+**Description:** Comprehensive referral management for wealth partners
+
+**Inputs:**
+- Referral invitations
+- Investment confirmations
+- Commission rate configurations
+- Performance metrics
+
+**Outputs:**
+- Referral status tracking
+- Commission calculations
+- Performance reports
+- Payout schedules
+
+**Preconditions:**
+- Wealth partner account active
+- Referral codes generated
+- Investment products available
+
+**Postconditions:**
+- Referrals tracked
+- Commissions calculated
+- Reports generated
+
+### 3.2 Non-Functional Requirements
+
+#### 3.2.1 Performance Requirements
+- **Response Time:** Page loads < 2 seconds on standard broadband
+- **API Response:** Database queries < 500ms average
+- **Concurrent Users:** Support 1000+ simultaneous users
+- **Scalability:** Horizontal scaling capability via Supabase
+
+#### 3.2.2 Security Requirements
+- **Authentication:** Multi-factor authentication support
+- **Encryption:** AES-256 for data at rest, TLS 1.3 for data in transit
+- **Access Control:** Role-based permissions with Row Level Security
+- **Audit Trails:** Comprehensive logging of all user actions
+- **Data Privacy:** GDPR and CCPA compliance
+
+#### 3.2.3 Reliability & Availability
+- **Uptime:** 99.9% availability target
+- **Recovery Time:** < 4 hours for critical system recovery
+- **Backup:** Daily automated backups with point-in-time recovery
+- **Monitoring:** Real-time system health monitoring
+
+#### 3.2.4 Maintainability
+- **Code Organization:** Modular component architecture
+- **Documentation:** Comprehensive inline and API documentation
+- **Testing:** 80%+ code coverage with automated tests
+- **Version Control:** Git-based workflow with branch protection
+
+#### 3.2.5 Portability
+- **Browser Compatibility:** Cross-browser support (Chrome, Firefox, Safari, Edge)
+- **Device Compatibility:** Responsive design for desktop, tablet, mobile
+- **Operating System:** Platform-independent web application
+- **Deployment:** Containerized deployment capability
+
+## 4. External Interface Requirements
+
+### 4.1 User Interfaces
+**Design Guidelines:**
+- Modern, clean aesthetic with professional appearance
+- Consistent color scheme with theme switching capability
+- Accessible design following WCAG 2.1 AA standards
+- Responsive layout adapting to all screen sizes
+
+**Key UI Components:**
+- Dashboard layouts for each user role
+- Form interfaces for KYC and investment requests
+- Data tables with sorting and filtering
+- Modal dialogs for confirmations and detailed views
+- Navigation menus with role-based visibility
+
+**User Interaction Flow:**
+- Single-page application with smooth transitions
+- Progressive disclosure of complex information
+- Clear call-to-action buttons and navigation paths
+- Consistent feedback for user actions
+
+### 4.2 Hardware Interfaces
+**Not Applicable** - Web-based application with no direct hardware requirements
+
+### 4.3 Software Interfaces
+
+#### 4.3.1 Supabase Integration
+- **Authentication API:** User management and session handling
+- **Database API:** PostgreSQL operations with real-time capabilities
+- **Storage API:** Document and file management
+- **Edge Functions:** Server-side logic execution
+
+#### 4.3.2 Internal API Structure
+- **RESTful Endpoints:** CRUD operations for all entities
+- **Real-time Subscriptions:** Live updates for dashboards
+- **GraphQL Support:** Efficient data fetching for complex queries
+- **Webhook Integration:** External system notifications
+
+### 4.4 Communication Interfaces
+
+#### 4.4.1 Email System
+- **Transactional Emails:** Account verification, password resets
+- **Notification Emails:** Investment updates, KYC status changes
+- **Marketing Communications:** Platform updates and announcements
+- **Templates:** Responsive HTML email templates
+
+#### 4.4.2 API Communications
+- **REST APIs:** JSON-based data exchange
+- **WebSocket Connections:** Real-time notifications
+- **HTTPS Protocol:** Secure communication channels
+- **Rate Limiting:** API usage controls and throttling
+
+## 5. System Architecture Overview
+
+### 5.1 High-Level Architecture
+**Architecture Pattern:** Client-Server with Backend-as-a-Service (BaaS)
+
+**Components:**
+- **Frontend Client:** React SPA with TypeScript
+- **API Gateway:** Supabase Edge Functions
+- **Database Layer:** PostgreSQL with Row Level Security
+- **Authentication Service:** Supabase Auth
+- **File Storage:** Supabase Storage
+- **Real-time Engine:** WebSocket connections
+
+### 5.2 Component Interactions
+```
+[React Client] <--> [Supabase API] <--> [PostgreSQL Database]
+     |                    |                      |
+     v                    v                      v
+[Local State]      [Edge Functions]       [File Storage]
+     |                    |                      |
+     v                    v                      v
+[UI Components]    [Business Logic]      [Document Store]
 ```
 
-### 2. Development Workflow
+### 5.3 Database Design Overview
+**Primary Tables:**
+- `profiles` - User information and roles
+- `investments` - Investment products and requests
+- `referrals` - Partner referral tracking
+- `kyc_requests` - KYC documentation and status
+- `notifications` - System notifications
+- `audit_logs` - System activity tracking
 
-#### Start the Website in Development Mode
+## 6. Data Requirements
 
-```bash
-# From the root directory
-bun run dev:website
+### 6.1 Key Data Entities
 
-# Or navigate to the website directory
-cd apps/website
-bun run dev
-```
+#### 6.1.1 User Data
+- Personal identification information
+- Business registration details
+- Contact information and preferences
+- Role assignments and permissions
 
-This will:
-- Start the Vite development server
-- Enable hot module replacement (HMR)
-- Launch the application at `http://localhost:5173`
-- Watch for file changes and auto-reload
+#### 6.1.2 Investment Data
+- Product specifications and terms
+- Investment requests and approvals
+- Portfolio holdings and performance
+- Transaction history and settlements
 
-#### Development Features
+#### 6.1.3 KYC Data
+- Identity verification documents
+- Compliance status and history
+- Risk assessment profiles
+- Regulatory reporting data
 
-- **Hot Module Replacement**: Changes appear instantly without page refresh
-- **TypeScript**: Full type checking and IntelliSense
-- **Path Aliases**: Use `@/` to import from `src/` directory
-- **Tailwind CSS**: Utility-first CSS framework
-- **Radix UI**: Accessible component library
-- **React Router**: Client-side routing
-- **React Query**: Data fetching and caching
-- **Theme System**: 5 beautiful themes with dark/light mode support
+### 6.2 Database Schema Overview
+**Estimated Data Volumes:**
+- Users: 10,000+ records initially, scaling to 100,000+
+- Investments: 1,000+ products, 50,000+ requests annually
+- Documents: 100,000+ files with version control
+- Transactions: 500,000+ records annually
 
-### 3. Building for Production
+### 6.3 Privacy and Data Retention
+**Data Protection:**
+- Personal data encrypted at rest and in transit
+- Anonymization of historical data after retention periods
+- Right to data portability and deletion (GDPR compliance)
 
-#### Build the Website
+**Retention Policies:**
+- KYC documents: 7 years post-account closure
+- Transaction records: 10 years for regulatory compliance
+- User activity logs: 2 years for security monitoring
 
-```bash
-# From the root directory
-bun run build:website
+## 7. Error Handling and Recovery
 
-# Or from the website directory
-cd apps/website
-bun run build
-```
+### 7.1 Error Categories
+**User Errors:**
+- Invalid form submissions with clear validation messages
+- Authentication failures with helpful recovery options
+- Permission denied with appropriate guidance
 
-This will:
-- Run TypeScript compilation (`tsc -b`)
-- Bundle the application using Vite
-- Generate optimized static files in `apps/website/dist/`
-- Include source maps for debugging
+**System Errors:**
+- Database connection failures with retry mechanisms
+- API timeouts with graceful degradation
+- File upload errors with alternative options
 
-#### Development Build (with debugging)
+### 7.2 Recovery Strategies
+**Automatic Recovery:**
+- Connection retry with exponential backoff
+- Failed transaction rollback and retry
+- Session recovery on page refresh
 
-```bash
-# Build in development mode (includes debugging features)
-bun run build:website:dev
-```
+**Manual Recovery:**
+- Admin tools for data correction
+- User-initiated password resets
+- Support ticket system for complex issues
 
-### 4. Preview Production Build
+### 7.3 Logging and Monitoring
+**Error Logging:**
+- Structured logging with severity levels
+- User action tracking for audit purposes
+- Performance metrics and alerting
 
-```bash
-# Preview the production build locally
-bun run preview:website
+## 8. Security and Privacy
 
-# Or from the website directory
-cd apps/website
-bun run preview
-```
+### 8.1 Authentication and Authorization
+**Multi-layered Security:**
+- JWT-based session management
+- Role-based access control (RBAC)
+- Row Level Security (RLS) policies
+- API rate limiting and throttling
 
-This serves the built application at `http://localhost:5173` to test the production build locally.
+### 8.2 OWASP Top 10 Compliance
+**Security Measures:**
+- Input validation and sanitization
+- SQL injection prevention
+- Cross-site scripting (XSS) protection
+- Cross-site request forgery (CSRF) tokens
+- Secure session management
 
-## 📁 Project Structure
+### 8.3 GDPR/CCPA Compliance
+**Privacy Controls:**
+- Explicit consent mechanisms
+- Data portability features
+- Right to deletion implementation
+- Privacy policy and terms of service
+- Data processing activity records
 
-```
-webapp-bun-monorepo-v2/
-├── apps/
-│   └── website/                 # React + Vite application
-│       ├── src/
-│       │   ├── components/      # Reusable React components
-│       │   │   └── ui/         # Radix UI components
-│       │   ├── pages/          # Page components
-│       │   ├── hooks/          # Custom React hooks
-│       │   ├── lib/            # Utility functions
-│       │   ├── assets/         # Static assets
-│       │   ├── App.tsx         # Main App component
-│       │   └── main.tsx        # Application entry point
-│       ├── public/             # Public static files
-│       ├── dist/               # Built files (generated)
-│       ├── package.json        # Website dependencies
-│       ├── vite.config.ts      # Vite configuration
-│       ├── tailwind.config.js  # Tailwind CSS config
-│       ├── tsconfig.json       # TypeScript config
-│       ├── THEME_DESIGN.md     # Theme design guide
-│       └── README.md           # Website documentation
-├── package.json                # Root workspace config
-├── bun.lock                    # Lock file
-└── README.md                   # This file
-```
+## 9. Quality Attributes
 
-## 🛠️ Available Scripts
+### 9.1 Usability
+**User Experience Goals:**
+- Intuitive navigation with minimal learning curve
+- Consistent interface patterns across all features
+- Accessibility support for users with disabilities
+- Mobile-first responsive design
 
-### Root Level Scripts (Monorepo)
+### 9.2 Scalability
+**Growth Accommodation:**
+- Horizontal scaling through Supabase infrastructure
+- Efficient database indexing and query optimization
+- CDN integration for static asset delivery
+- Caching strategies for improved performance
 
-```bash
-# Website development
-bun run dev:website              # Start website in development mode
-bun run build:website            # Build website for production
-bun run build:website:dev        # Build website in development mode
-bun run preview:website          # Preview production build
+### 9.3 Performance Targets
+**Measurable Goals:**
+- Page load time < 2 seconds
+- API response time < 500ms
+- Database query optimization < 100ms average
+- 99.9% uptime availability
 
-# Install dependencies for all workspaces
-bun install
-```
+### 9.4 Localization/Internationalization
+**Future Considerations:**
+- Multi-language support architecture
+- Currency formatting and conversion
+- Regional compliance adaptations
+- Time zone handling
 
-### Website-Specific Scripts
+## 10. Appendices
 
-```bash
-cd apps/website
+### 10.1 Glossary
+- **Alternative Investments:** Non-traditional investment vehicles beyond stocks and bonds
+- **Backend-as-a-Service (BaaS):** Cloud computing service model providing backend infrastructure
+- **Row Level Security (RLS):** Database security feature controlling access to individual rows
+- **Single Page Application (SPA):** Web application loading single HTML page with dynamic updates
 
-# Development
-bun run dev                      # Start dev server (http://localhost:5173)
+### 10.2 Acronyms
+- **API:** Application Programming Interface
+- **CRUD:** Create, Read, Update, Delete
+- **JWT:** JSON Web Token
+- **REST:** Representational State Transfer
+- **SPA:** Single Page Application
+- **UI/UX:** User Interface/User Experience
 
-# Building
-bun run build                    # Production build
-bun run build:dev                # Development build
+### 10.3 Document History
+| Version | Date | Author | Changes |
+|---------|------|---------|---------|
+| 1.0 | August 3, 2025 | Development Team | Initial SRD creation |
 
-# Quality
-bun run lint                     # Run ESLint
-bun run preview                  # Preview build locally
-```
-
-## 🎨 Tech Stack
-
-### Frontend (Website)
-- **Framework**: React 18
-- **Build Tool**: Vite 6
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Components**: Radix UI
-- **Routing**: React Router DOM 7
-- **State Management**: React Query (TanStack Query)
-- **Forms**: React Hook Form + Zod validation
-- **Icons**: Lucide React
-- **Animations**: Framer Motion
-- **Theme System**: Custom CSS variables with 5 themes + dark mode
-
-### Development Tools
-- **Package Manager**: Bun
-- **Linting**: ESLint 9
-- **Type Checking**: TypeScript 5.7
-- **CSS Processing**: PostCSS + Autoprefixer
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create `.env` files in the website directory for environment-specific configuration:
-
-```bash
-# apps/website/.env.local
-VITE_API_URL=http://localhost:3000
-VITE_APP_TITLE=My App
-```
-
-### Vite Configuration
-
-The website uses custom Vite configuration (`apps/website/vite.config.ts`) with:
-- Path aliases (`@/` → `src/`)
-- Development server with CORS enabled
-- Source maps in production
-- Custom allowed hosts for sandbox environments
-
-## 🚀 Deployment
-
-### Build Output
-
-After running `bun run build:website`, the static files will be in `apps/website/dist/`:
-
-```
-dist/
-├── index.html
-├── assets/
-│   ├── index-[hash].js
-│   ├── index-[hash].css
-│   └── [other-assets]
-└── [public-files]
-```
-
-### Deployment Options
-
-1. **Static Hosting** (Vercel, Netlify, GitHub Pages)
-   - Deploy the `apps/website/dist/` directory
-   - Set build command: `bun run build:website`
-   - Set output directory: `apps/website/dist`
-
-2. **Docker**
-   ```dockerfile
-   FROM nginx:alpine
-   COPY apps/website/dist /usr/share/nginx/html
-   ```
-
-3. **CDN/S3**
-   - Upload contents of `dist/` to your CDN or S3 bucket
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Port already in use**
-   ```bash
-   # Kill process on port 5173
-   lsof -ti:5173 | xargs kill -9
-   ```
-
-2. **Module not found errors**
-   ```bash
-   # Clear Bun cache and reinstall
-   rm -rf node_modules bun.lock
-   bun install
-   ```
-
-3. **TypeScript errors**
-   ```bash
-   # Check types manually
-   cd apps/website
-   npx tsc --noEmit
-   ```
-
-4. **Build failures**
-   ```bash
-   # Clean build directory
-   rm -rf apps/website/dist
-   bun run build:website
-   ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run linting and type checks
-5. Test your changes across all themes and both light/dark modes
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+### 10.4 Related Resources
+- **GitHub Repository:** [Project Repository]
+- **API Documentation:** [Supabase Dashboard]
+- **Design System:** [Component Library]
+- **Deployment Guide:** [Infrastructure Documentation]
 
 ---
 
-**Happy coding! 🎉**
+## Optional Sections
+
+### AI/ML Module Requirements
+**Future Enhancement:** Intelligent investment recommendations based on user profiles and market analysis
+
+### CI/CD and DevOps Setup
+**Development Workflow:**
+- Git-based version control with branch protection
+- Automated testing on pull requests
+- Continuous deployment to staging and production environments
+- Infrastructure as Code (IaC) with version control
+
+### Testing Strategy and Coverage Plan
+**Testing Approach:**
+- Unit testing with Jest and React Testing Library
+- Integration testing for API endpoints
+- End-to-end testing with Playwright
+- Performance testing with Lighthouse
+- Security testing with automated vulnerability scans
+
+### Licensing and Legal Considerations
+**Compliance Framework:**
+- MIT License for open-source components
+- Commercial licensing for proprietary features
+- Financial services regulatory compliance
+- Data protection and privacy law adherence
+
+---
+
+**Document Status:** Draft v1.0  
+**Last Updated:** August 3, 2025  
+**Next Review:** September 3, 2025
