@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "installCommand": "cd apps/website && npm install --legacy-peer-deps",
-  "buildCommand": "cd apps/website && npm run build",
+  "installCommand": "npm install --workspace apps/website",
+  "buildCommand": "npm run build --workspace apps/website",
   "outputDirectory": "apps/website/.next"
 }

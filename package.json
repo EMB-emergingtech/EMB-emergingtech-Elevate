@@ -6,12 +6,12 @@
         "apps/*"
     ],
     "scripts": {
-        "dev": "cd apps/website && npm run dev",
-        "build": "cd apps/website && npm run build",
-        "start": "cd apps/website && npm run start"
+        "dev": "npm run dev --workspace=apps/website",
+        "build": "npm run build --workspace=apps/website",
+        "start": "npm run start --workspace=apps/website"
     },
     "engines": {
-        "node": "20.x",
-        "npm": ">=9.0.0"
+        "node": "22.x",
+        "npm": ">=10.0.0"
     }
 }
