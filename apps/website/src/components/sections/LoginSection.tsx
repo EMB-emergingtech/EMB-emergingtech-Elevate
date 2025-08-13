@@ -1,6 +1,8 @@
+'use client';
+
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,15 +11,51 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { UserCircle, Building2, ShieldCheck } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
 
-const LoginSection = () => {
+export function LoginSection() {
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [countdown, setCountdown] = useState(30);
   const [activeTab, setActiveTab] = useState('otp');
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const router = useRouter();
   const { toast } = useToast();
-  const navigate = useNavigate();
+
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsLoading(true);
+
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      if (data?.user) {
+        toast({
+          title: "Success",
+          description: "Logged in successfully",
+        });
+        router.push('/dashboard');
+        router.refresh();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleOtpSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +88,7 @@ const LoginSection = () => {
     setTimeout(() => {
       setIsLoading(false);
       toast.success("Login successful");
-      navigate("/dashboard/investor");
+      router.push("/dashboard/investor");
     }, 1000);
   };
 
@@ -61,7 +99,7 @@ const LoginSection = () => {
     setTimeout(() => {
       setIsLoading(false);
       toast.success("OTP verified successfully");
-      navigate("/dashboard/investor");
+      router.push("/dashboard/investor");
     }, 1000);
   };
 
@@ -74,13 +112,13 @@ const LoginSection = () => {
       
       switch (role) {
         case 'Investor':
-          navigate("/dashboard/investor");
+          router.push("/dashboard/investor");
           break;
         case 'Wealth Partner':
-          navigate("/dashboard/partner");
+          router.push("/dashboard/partner");
           break;
         case 'Admin':
-          navigate("/dashboard/admin");
+          router.push("/dashboard/admin");
           break;
       }
     }, 1000);
@@ -91,13 +129,13 @@ const LoginSection = () => {
     
     switch (role) {
       case 'Investor':
-        navigate('/register');
+        router.push('/register');
         break;
       case 'Wealth Partner':
-        navigate('/WealthPartnerRegister');
+        router.push('/WealthPartnerRegister');
         break;
       case 'Admin':
-        navigate('/AdminRegister');
+        router.push('/AdminRegister');
         break;
     }
   };
@@ -281,7 +319,7 @@ const LoginSection = () => {
                   <Button 
                     variant="outline" 
                     className="text-sm border-primary text-primary hover:bg-primary/5"
-                    onClick={() => navigate("/register")}
+                    onClick={() => router.push("/register")}
                   >
                     Have an invite code? Register here
                   </Button>
@@ -326,5 +364,3 @@ const LoginSection = () => {
     </section>
   );
 };
-
-export default LoginSection;
