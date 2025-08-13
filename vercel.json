@@ -1,6 +1,6 @@
 {
   "buildCommand": "cd apps/website && npm install && npm run build",
   "outputDirectory": "apps/website/.next",
-  "installCommand": "cd apps/website && npm install",
+  "installCommand": "cd apps/website && rm -f package-lock.json && npm install",
   "framework": "nextjs"
 }
