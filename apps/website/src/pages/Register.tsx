@@ -10,7 +10,7 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('Investor'); // Default role is Investor
-  const [investorCode, setInvestorCode] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -25,75 +25,45 @@ const Register = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
 
-    if (!token) {
-      setError('Invalid or expired invitation link.');
+    // Require invite code for Investor role
+    if (role === 'Investor' && !inviteCode.trim()) {
+      setError('Invite code is required to register as an investor.');
       return;
     }
 
-    // Validate investor code is required for Investor role
-    if (role === 'Investor' && !investorCode.trim()) {
-      setError('Investor code is required to register as an investor.');
+    // MOCK LOGIC: Accept only 'invest123' as the investor code for investors
+    if (role === 'Investor' && inviteCode.trim().toLowerCase() !== 'invest123') {
+      setError('Invalid investor code. For demo, use: invest123');
       return;
     }
 
     try {
-      const { data, error } = await supabase
-        .from('referrals')
-        .select('*')
-        .eq('token', token)
-        .single();
-
-      if (error || !data) {
-        setError('Invalid or expired invitation link.');
-        return;
-      }
-
-      const { user, session, error: authError } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
       });
-
       if (authError) {
-        setError('Failed to register. Please try again.');
+        console.error('Supabase signUp error:', authError);
+        setError('Failed to register. ' + (authError.message || 'Please try again.'));
         return;
       }
-
-      if (!user?.id) {
+      if (!data?.user?.id) {
         setError('User ID is missing. Please try again.');
         return;
       }
-
-      // Wait a moment for the auth.users record to be fully created
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Assign role to the user in the database first
+      // Wait longer for user record to be available
+      await new Promise(resolve => setTimeout(resolve, 3000));
       const { error: roleError } = await supabase.from('profiles').insert({
-        id: user.id,
+        id: data.user.id,
         role,
       });
-
       if (roleError) {
-        setError('Failed to assign role. Please contact support.');
+        console.error('Supabase profile insert error:', roleError);
+        setError('Failed to assign role. ' + (roleError.message || 'Please contact support.'));
         return;
       }
-
-      // Save investor code if role is Investor (required at this point)
-      if (role === 'Investor') {
-        const { error: investorCodeError } = await supabase
-          .from('profiles')
-          .update({ investor_code: investorCode })
-          .eq('id', user.id);
-
-        if (investorCodeError) {
-          console.error('Failed to save investor code:', investorCodeError);
-          setError('Failed to save investor code. Please contact support.');
-          return;
-        }
-      }
-
+      // No backend update for invite code (mock logic)
       navigate('/login');
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
@@ -160,22 +130,24 @@ const Register = () => {
                   <option value="Wealth Partner">Wealth Partner</option>
                 </select>
               </div>
-              <div>
-                <label htmlFor="investorCode" className="block text-sm font-medium mb-1">
-                  Investor Code <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  id="investorCode"
-                  type="text"
-                  value={investorCode}
-                  onChange={(e) => setInvestorCode(e.target.value)}
-                  placeholder="Enter your investor code"
-                  required
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  An investor code is required to register as an investor
-                </p>
-              </div>
+              {role === 'Investor' && (
+                <div>
+                  <label htmlFor="inviteCode" className="block text-sm font-medium mb-1">
+                    Invite Code <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="inviteCode"
+                    type="text"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    placeholder="Enter your invite code"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    You must have received an invite code via email to register as an investor.
+                  </p>
+                </div>
+              )}
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button type="submit" className="w-full">Register</Button>
             </form>

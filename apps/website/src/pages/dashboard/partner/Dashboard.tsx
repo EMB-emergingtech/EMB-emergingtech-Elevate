@@ -25,6 +25,7 @@ import InvestorCard from '@/components/dashboard/InvestorCard';
 import { useToast } from '@/hooks/use-toast';
 import ReferralHistory from '@/components/dashboard/ReferralHistory';
 import { supabase } from '@/lib/supabaseClient';
+import { CommissionAnalyticsDialog } from '@/components/dashboard/CommissionAnalyticsDialog';
 
 interface Investor {
   id: string;
@@ -44,6 +45,25 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAddInvestorOpen, setIsAddInvestorOpen] = useState(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+
+  // Mock commission trend data (in production, this would come from an API)
+  const commissionTrends = [
+    { month: 'Apr 2025', icdCommission: 1250, bondCommission: 750, totalCommission: 2000 },
+    { month: 'May 2025', icdCommission: 1500, bondCommission: 800, totalCommission: 2300 },
+    { month: 'Jun 2025', icdCommission: 1750, bondCommission: 950, totalCommission: 2700 },
+    { month: 'Jul 2025', icdCommission: 2100, bondCommission: 1400, totalCommission: 3500 }
+  ];
+
+  const currentMonthData = {
+    icdAmount: 8750,
+    bondAmount: 3750,
+    topClients: [
+      { name: 'Corporate Investor A', aum: '$4.2M', commission: 4200 },
+      { name: 'Corporate Investor B', aum: '$3.8M', commission: 3800 },
+      { name: 'John H', aum: '$2.5M', commission: 2500 }
+    ]
+  };
 
   const [activities] = useState([
     {
@@ -158,6 +178,10 @@ const Dashboard = () => {
     setIsAddInvestorOpen(false);
   };
 
+  const getEmailUsername = (email: string) => {
+    return email.split('@')[0];
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -228,7 +252,7 @@ const Dashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Investor Name</TableHead>
+                  <TableHead>Investor</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead className="text-right">Total Investment</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -239,7 +263,7 @@ const Dashboard = () => {
                   <TableRow key={investor.id}>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{investor.name}</p>
+                        <p className="font-medium">{getEmailUsername(investor.email)}</p>
                         {investor.company && (
                           <p className="text-xs text-muted-foreground">{investor.company}</p>
                         )}
@@ -293,7 +317,7 @@ const Dashboard = () => {
                   <div className="bg-muted/50 p-4 rounded-lg">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
                       <h4 className="font-medium">
-                        <span className="text-primary">{activity.investor}</span> {activity.action}
+                        <span className="text-primary">{getEmailUsername(activity.investor)}</span> {activity.action}
                       </h4>
                       <span className="text-xs text-muted-foreground">{activity.time}</span>
                     </div>
@@ -338,31 +362,23 @@ const Dashboard = () => {
               <div className="pt-4 border-t border-border">
                 <h4 className="text-sm font-medium text-muted-foreground mb-4">Top Performing Clients</h4>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">Corporate Investor A</p>
-                      <p className="text-xs text-muted-foreground">AUM: $4.2M</p>
+                  {investors.slice(0, 3).map((investor) => (
+                    <div key={investor.id} className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{getEmailUsername(investor.email)}</p>
+                        <p className="text-xs text-muted-foreground">AUM: ${(investor.totalInvestment / 1000000).toFixed(1)}M</p>
+                      </div>
+                      <span className="numeric font-medium">${(investor.totalInvestment * 0.001).toFixed(0)}</span>
                     </div>
-                    <span className="numeric font-medium">$4,200</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">Corporate Investor B</p>
-                      <p className="text-xs text-muted-foreground">AUM: $3.8M</p>
-                    </div>
-                    <span className="numeric font-medium">$3,800</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">John H</p>
-                      <p className="text-xs text-muted-foreground">AUM: $2.5M</p>
-                    </div>
-                    <span className="numeric font-medium">$2,500</span>
-                  </div>
+                  ))}
                 </div>
               </div>
               
-              <Button variant="outline" className="w-full border-primary text-primary">
+              <Button 
+                variant="outline" 
+                className="w-full border-primary text-primary"
+                onClick={() => setIsAnalyticsOpen(true)}
+              >
                 <Activity className="mr-2 h-4 w-4" />
                 View Detailed Analysis
               </Button>
@@ -376,6 +392,13 @@ const Dashboard = () => {
         isOpen={isAddInvestorOpen}
         onClose={() => setIsAddInvestorOpen(false)}
         onInvestorAdded={handleInvestorAdded}
+      />
+
+      <CommissionAnalyticsDialog
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+        trends={commissionTrends}
+        currentMonth={currentMonthData}
       />
 
       <ReferralHistory />

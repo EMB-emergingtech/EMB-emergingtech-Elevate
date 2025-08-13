@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { KeyRound } from 'lucide-react';
+import { useSignUp } from '@clerk/clerk-react';
 
 const RegisterForm = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +25,7 @@ const RegisterForm = () => {
   const [otpError, setOtpError] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { signUp, setActive, isLoaded } = useSignUp();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +35,7 @@ const RegisterForm = () => {
       setInviteCodeError('Invalid invite code. Use "INVITE123" for the demo.');
       return;
     }
+    if (!isLoaded) return;
     setIsLoading(true);
     try {
       // Demo: use fixed email for admin

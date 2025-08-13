@@ -24,6 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/lib/supabaseClient';
 
 interface DashboardLayoutProps {
   navItems: {
@@ -43,9 +44,10 @@ const DashboardLayout = ({ navItems, userName, userRole }: DashboardLayoutProps)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut(); // Properly clear session
     toast.success("Logged out successfully");
-    navigate('/');
+    navigate('/login');
   };
 
   const notifications = [

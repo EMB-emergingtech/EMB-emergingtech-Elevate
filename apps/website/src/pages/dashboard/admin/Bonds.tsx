@@ -18,6 +18,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import BondUploadForm from '@/components/dashboard/BondUploadForm';
 import { supabase } from '@/lib/supabaseClient';
 

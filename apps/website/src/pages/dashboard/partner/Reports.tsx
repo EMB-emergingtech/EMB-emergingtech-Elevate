@@ -1,22 +1,18 @@
 import { useState, useEffect } from 'react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Calendar, TrendingUp, BarChart3 } from 'lucide-react';
+import { Calendar, Download, TrendingUp } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabaseClient';
+import { format, subMonths } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { format, subMonths } from 'date-fns';
-import { Switch } from '@/components/ui/switch';
-import { supabase } from '@/lib/supabaseClient';
+import { DateRange } from 'react-day-picker';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { InvestorMetricsDialog } from '@/components/dashboard/InvestorMetricsDialog';
 
 const Reports = () => {
   const { toast } = useToast();
@@ -28,6 +24,7 @@ const Reports = () => {
   const [useSupabase, setUseSupabase] = useState(true);
   const [commissionData, setCommissionData] = useState<any[]>([]);
   const [investorPerformance, setInvestorPerformance] = useState<any[]>([]);
+  const [isMetricsDialogOpen, setIsMetricsDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!useSupabase) {
@@ -64,27 +61,6 @@ const Reports = () => {
 
   // Calculate total commission
   const totalCommission = commissionData.reduce((sum, item) => sum + (item.totalCommission || 0), 0);
-
-  // Mock chart data - we would use a real chart component in production
-  const chartData = {
-    labels: commissionData.map(item => item.month),
-    datasets: [
-      {
-        label: 'ICD Commission',
-        data: commissionData.map(item => item.icdCommission),
-        backgroundColor: 'rgba(25, 107, 36, 0.6)',
-        borderColor: 'rgba(25, 107, 36, 1)',
-        borderWidth: 1
-      },
-      {
-        label: 'Bond Commission',
-        data: commissionData.map(item => item.bondCommission),
-        backgroundColor: 'rgba(225, 243, 233, 0.6)',
-        borderColor: 'rgba(25, 107, 36, 0.5)',
-        borderWidth: 1
-      }
-    ]
-  };
 
   return (
     <>
@@ -170,27 +146,38 @@ const Reports = () => {
             </Popover>
           </CardHeader>
           <CardContent>
-            {/* Mock chart visualization */}
-            <div className="h-80 w-full bg-background rounded-md border border-border flex items-center justify-center">
-              <div className="text-center p-4">
-                <BarChart3 className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-                <div className="space-y-2">
-                  <p className="font-medium">Commission Growth Chart</p>
-                  <p className="text-sm text-muted-foreground">
-                    Showing month-over-month growth from Apr 2025 to Jul 2025
-                  </p>
-                  <div className="flex items-center justify-center gap-4 mt-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-[rgba(25,107,36,0.6)] rounded-sm"></div>
-                      <span className="text-xs">ICD Commission</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-[rgba(225,243,233,0.6)] rounded-sm"></div>
-                      <span className="text-xs">Bond Commission</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={commissionData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value: number) => [`$${value.toLocaleString()}`, undefined]}
+                    labelStyle={{ color: 'black' }}
+                    contentStyle={{ 
+                      backgroundColor: 'white',
+                      border: '1px solid #ccc',
+                      borderRadius: '6px'
+                    }}
+                  />
+                  <Legend />
+                  <Bar 
+                    dataKey="icdCommission" 
+                    name="ICD Commission" 
+                    fill="rgba(25, 107, 36, 0.6)"
+                    stroke="rgba(25, 107, 36, 1)"
+                    strokeWidth={1}
+                  />
+                  <Bar 
+                    dataKey="bondCommission" 
+                    name="Bond Commission" 
+                    fill="rgba(225, 243, 233, 0.6)"
+                    stroke="rgba(25, 107, 36, 0.5)"
+                    strokeWidth={1}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
@@ -251,7 +238,12 @@ const Reports = () => {
       <Card className="premium-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Investor Performance</CardTitle>
-          <Button variant="outline" size="sm" className="border-primary text-primary">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-primary text-primary"
+            onClick={() => setIsMetricsDialogOpen(true)}
+          >
             <TrendingUp className="mr-2 h-4 w-4" /> View Detailed Metrics
           </Button>
         </CardHeader>
@@ -280,6 +272,12 @@ const Reports = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <InvestorMetricsDialog
+        isOpen={isMetricsDialogOpen}
+        onClose={() => setIsMetricsDialogOpen(false)}
+        investors={investorPerformance}
+      />
     </>
   );
 };

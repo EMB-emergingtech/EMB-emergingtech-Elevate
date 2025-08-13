@@ -170,6 +170,17 @@ CREATE TABLE IF NOT EXISTS reit_requests (
   created_at timestamptz DEFAULT now()
 );
 
+-- Invites table for investor registration
+CREATE TABLE IF NOT EXISTS invites (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL UNIQUE,
+  invite_code text NOT NULL UNIQUE,
+  role text NOT NULL DEFAULT 'Investor',
+  created_at timestamptz DEFAULT now(),
+  used boolean DEFAULT false,
+  used_at timestamptz
+);
+
 -- Disable RLS on new tables for admin access
 ALTER TABLE kyc_requests DISABLE ROW LEVEL SECURITY;
 ALTER TABLE pending_requests DISABLE ROW LEVEL SECURITY;
@@ -177,3 +188,4 @@ ALTER TABLE investment_requests DISABLE ROW LEVEL SECURITY;
 ALTER TABLE bond_requests DISABLE ROW LEVEL SECURITY;
 ALTER TABLE icd_requests DISABLE ROW LEVEL SECURITY;
 ALTER TABLE reit_requests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE invites DISABLE ROW LEVEL SECURITY;

@@ -1,0 +1,129 @@
+# Local Development API Tests
+# Update the variables below with your actual Supabase credentials
+
+### Environment Variables
+@localUrl = http://localhost:5173
+@supabaseUrl = https://your-project-id.supabase.co
+@supabaseKey = your-anon-key
+@serviceKey = your-service-role-key
+
+### Quick Setup Test
+# Test if your local server is running
+GET {{localUrl}}
+
+### Supabase Connection Test
+# Test Supabase connection
+GET {{supabaseUrl}}/rest/v1/
+apikey: {{supabaseKey}}
+
+### User Registration Flow
+# 1. Register as Investor
+POST {{supabaseUrl}}/auth/v1/signup
+Content-Type: application/json
+apikey: {{supabaseKey}}
+
+{
+  "email": "investor@test.com",
+  "password": "investor123",
+  "data": {
+    "role": "investor"
+  }
+}
+
+###
+
+# 2. Register as Wealth Partner  
+POST {{supabaseUrl}}/auth/v1/signup
+Content-Type: application/json
+apikey: {{supabaseKey}}
+
+{
+  "email": "partner@test.com",
+  "password": "partner123",
+  "data": {
+    "role": "wealth_partner"
+  }
+}
+
+###
+
+# 3. Register as Admin
+POST {{supabaseUrl}}/auth/v1/signup
+Content-Type: application/json
+apikey: {{supabaseKey}}
+
+{
+  "email": "admin@test.com",
+  "password": "admin123",
+  "data": {
+    "role": "admin"
+  }
+}
+
+### Login and Get Token
+# Login as investor (save the access_token from response)
+POST {{supabaseUrl}}/auth/v1/token?grant_type=password
+Content-Type: application/json
+apikey: {{supabaseKey}}
+
+{
+  "email": "investor@test.com",
+  "password": "investor123"
+}
+
+### Database Operations
+# Get profiles (replace YOUR_TOKEN with actual token)
+GET {{supabaseUrl}}/rest/v1/profiles?select=*
+apikey: {{supabaseKey}}
+Authorization: Bearer YOUR_TOKEN
+
+###
+
+# Create investor profile
+POST {{supabaseUrl}}/rest/v1/profiles
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer YOUR_TOKEN
+
+{
+  "role": "investor",
+  "referral_code": "INV001"
+}
+
+### Investment Operations
+# Submit ICD request
+POST {{supabaseUrl}}/rest/v1/icd_requests
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer YOUR_TOKEN
+
+{
+  "amount": 100000,
+  "tenure": 90
+}
+
+###
+
+# Get ICD requests
+GET {{supabaseUrl}}/rest/v1/icd_requests?select=*
+apikey: {{supabaseKey}}
+Authorization: Bearer YOUR_TOKEN
+
+### Admin Operations (use admin token)
+# Get all KYC requests
+GET {{supabaseUrl}}/rest/v1/kyc_requests?select=*
+apikey: {{supabaseKey}}
+Authorization: Bearer ADMIN_TOKEN
+
+###
+
+# Approve KYC request
+PATCH {{supabaseUrl}}/rest/v1/kyc_requests?id=eq.KYFC_REQUEST_ID
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer ADMIN_TOKEN
+
+{
+  "status": "approved",
+  "reviewed_at": "2025-08-03T10:00:00Z"
+}

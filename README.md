@@ -19,6 +19,12 @@ The system will **NOT** include:
 - Real-time trading capabilities
 - Cryptocurrency investments
 - Insurance products
+Multi-role user management with distinct dashboards for Investors, Wealth Partners, and Administrators.
+Investment product management for ICDs, Bonds, and REITs.
+KYC (Know Your Customer) processing with automated workflows.
+Referral and commission tracking for wealth partners.
+Real-time notifications and approval workflows.
+Comprehensive reporting and analytics.
 
 ### 1.3 Definitions, Acronyms, and Abbreviations
 - **ICD**: Inter-Corporate Deposit - Short-term lending instruments between corporations

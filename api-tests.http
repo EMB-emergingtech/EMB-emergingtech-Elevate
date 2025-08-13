@@ -1,0 +1,178 @@
+# Elevate Wealth Management Platform API Tests
+# Use this file with REST Client extension in VS Code
+
+### Variables
+@baseUrl = http://localhost:5173
+@supabaseUrl = https://your-project.supabase.co
+@supabaseKey = your-anon-key-here
+
+### Authentication Tests
+
+# Register new user
+POST {{supabaseUrl}}/auth/v1/signup
+Content-Type: application/json
+apikey: {{supabaseKey}}
+
+{
+  "email": "test@example.com",
+  "password": "securepassword123",
+  "data": {
+    "role": "investor"
+  }
+}
+
+###
+
+# Login user
+POST {{supabaseUrl}}/auth/v1/token?grant_type=password
+Content-Type: application/json
+apikey: {{supabaseKey}}
+
+{
+  "email": "test@example.com", 
+  "password": "securepassword123"
+}
+
+###
+
+# Get user profile
+GET {{supabaseUrl}}/rest/v1/profiles?select=*
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer your-jwt-token-here
+
+### Investment Tests
+
+# Get all investments
+GET {{supabaseUrl}}/rest/v1/investments?select=*
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer your-jwt-token-here
+
+###
+
+# Create ICD request
+POST {{supabaseUrl}}/rest/v1/icd_requests
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer your-jwt-token-here
+
+{
+  "amount": 100000,
+  "tenure": 90,
+  "status": "Pending"
+}
+
+###
+
+# Create Bond request
+POST {{supabaseUrl}}/rest/v1/bond_requests
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer your-jwt-token-here
+
+{
+  "bondId": "BOND001",
+  "amount": 50000,
+  "status": "Pending"
+}
+
+###
+
+# Create REIT request
+POST {{supabaseUrl}}/rest/v1/reit_requests
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer your-jwt-token-here
+
+{
+  "reitId": "REIT001",
+  "amount": 25000,
+  "status": "Pending"
+}
+
+### KYC Tests
+
+# Submit KYC request
+POST {{supabaseUrl}}/rest/v1/kyc_requests
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer your-jwt-token-here
+
+{
+  "user_name": "John Doe",
+  "user_email": "john@example.com",
+  "status": "pending",
+  "documents": {
+    "id_proof": "document_url_here",
+    "address_proof": "document_url_here"
+  }
+}
+
+###
+
+# Get KYC requests (Admin only)
+GET {{supabaseUrl}}/rest/v1/kyc_requests?select=*
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer admin-jwt-token-here
+
+### Referral Tests
+
+# Create referral
+POST {{supabaseUrl}}/rest/v1/referrals
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer partner-jwt-token-here
+
+{
+  "partnerEmail": "partner@example.com",
+  "investorEmail": "investor@example.com",
+  "status": "pending",
+  "investment": 0,
+  "commission": 0
+}
+
+###
+
+# Get partner referrals
+GET {{supabaseUrl}}/rest/v1/referrals?partnerEmail=eq.partner@example.com&select=*
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer partner-jwt-token-here
+
+### Admin Tests
+
+# Get all pending requests
+GET {{supabaseUrl}}/rest/v1/pending_requests?status=eq.pending&select=*
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer admin-jwt-token-here
+
+###
+
+# Approve investment request
+PATCH {{supabaseUrl}}/rest/v1/investment_requests?id=eq.request-id-here
+Content-Type: application/json
+apikey: {{supabaseKey}}
+Authorization: Bearer admin-jwt-token-here
+
+{
+  "status": "approved",
+  "approved_at": "2025-08-03T10:00:00Z",
+  "notes": "Approved after review"
+}
+
+### Database Health Check
+
+# Check if profiles table exists
+GET {{supabaseUrl}}/rest/v1/profiles?select=count
+Content-Type: application/json
+apikey: {{supabaseKey}}
+
+###
+
+# Check investors table
+GET {{supabaseUrl}}/rest/v1/investors?select=count
+Content-Type: application/json
+apikey: {{supabaseKey}}
