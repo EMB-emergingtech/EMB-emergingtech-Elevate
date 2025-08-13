@@ -1,12 +1,7 @@
 {
-  "buildCommand": "cd apps/website && npm install && npm run build",
-  "outputDirectory": "apps/website/.next",
-  "installCommand": "cd apps/website && npm install",
-  "framework": "nextjs",
   "version": 2,
-  "build": {
-    "env": {
-      "NODE_VERSION": "20.x"
-    }
-  }
+  "framework": "nextjs",
+  "installCommand": "cd apps/website && npm install --legacy-peer-deps",
+  "buildCommand": "cd apps/website && npm run build",
+  "outputDirectory": "apps/website/.next"
 }
