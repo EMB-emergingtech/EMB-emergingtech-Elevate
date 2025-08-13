@@ -1,15 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  typescript: {
-    ignoreBuildErrors: false
-  },
   experimental: {
-    serverActions: true,
+    serverActions: {
+      allowedOrigins: ['localhost:3000']
+    },
     externalDir: true
   },
-  distDir: '.next',
   webpack: (config) => {
     config.resolve.fallback = { fs: false, net: false, tls: false };
     return config;
