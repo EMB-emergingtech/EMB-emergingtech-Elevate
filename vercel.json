@@ -1,7 +1,8 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "installCommand": "cd apps/website && npm install",
-  "buildCommand": "cd apps/website && npm run build",
-  "outputDirectory": "apps/website/.next"
+  "rootDirectory": "apps/website",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": ".next"
 }
