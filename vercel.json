@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "installCommand": "npm install --workspace apps/website",
-  "buildCommand": "npm run build --workspace apps/website",
+  "installCommand": "cd apps/website && npm install",
+  "buildCommand": "cd apps/website && npm run build",
   "outputDirectory": "apps/website/.next"
 }
