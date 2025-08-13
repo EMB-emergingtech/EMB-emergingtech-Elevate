@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "engines": {
-    "node": "22.x"
+    "node": "20.x"
   },
   "scripts": {
     "preinstall": "node -e \"if(process.env.npm_execpath.includes('yarn') || process.env.npm_execpath.includes('pnpm')) throw new Error('Please use npm for installation')\"",
