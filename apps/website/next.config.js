@@ -6,8 +6,10 @@ const nextConfig = {
     ignoreBuildErrors: false
   },
   experimental: {
-    serverActions: true
+    serverActions: true,
+    externalDir: true
   },
+  distDir: '.next',
   webpack: (config) => {
     config.resolve.fallback = { fs: false, net: false, tls: false };
     return config;
