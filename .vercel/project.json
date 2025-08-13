@@ -1,0 +1,8 @@
+{
+  "projectId": "elevate-wealth-management",
+  "orgId": "arushigupta",
+  "settings": {
+    "framework": "nextjs",
+    "directory": "apps/website"
+  }
+}

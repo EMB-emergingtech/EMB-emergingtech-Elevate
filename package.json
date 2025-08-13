@@ -5,9 +5,10 @@
     "scripts": {
         "dev": "cd apps/website && npm run dev",
         "build": "cd apps/website && npm run build",
-        "start": "cd apps/website && npm run start"
+        "start": "cd apps/website && npm run start",
+        "install": "cd apps/website && npm install"
     },
     "engines": {
-        "node": "22.x"
+        "node": "20.x"
     }
 }
